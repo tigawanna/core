@@ -224,7 +224,7 @@ export const checkDesktopFavicon = async (baseUrl: string, head: HTMLElement | n
 
   return {
     messages: [ ...svgReport.messages, ...pngReport.messages, ...icoReport.messages ],
-    icon: pngReport.icon ? pngReport.icon.content : null,
+    icon: pngReport.icon?.content ?? icoReport.icon?.content ?? svgReport.icon?.content ?? null,
     icons: {
       png: pngReport.icon,
       ico: icoReport.icon,

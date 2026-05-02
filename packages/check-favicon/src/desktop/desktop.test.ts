@@ -1,5 +1,5 @@
 import { parse } from 'node-html-parser'
-import { checkPngFavicon, checkSvgFavicon } from "./desktop";
+import { checkDesktopFavicon, checkPngFavicon, checkSvgFavicon } from "./desktop";
 import { CheckerMessage, CheckerStatus, DesktopFaviconReport, FetchResponse, MessageId } from '../types';
 import { filePathToDataUrl, filePathToReadableStream, filePathToString, stringToReadableStream } from '../helper';
 import { testFetcher } from '../test-helper';
@@ -258,4 +258,27 @@ test('checkSvgFavicon - Three PNG icons with different sizes', async () => {
       readableStream: await filePathToReadableStream(testIcon96),
     }
   });
+})
+
+// When only an ICO favicon is available (no PNG, no SVG), the top-level
+// `icon` field of the DesktopFaviconReport must fall back to the ICO content
+// instead of being null.
+test('checkDesktopFavicon - ICO content is used as top-level icon when no PNG/SVG', async () => {
+  const testIconPath = './fixtures/simple-ico.ico';
+  const root = parse(`<link rel="shortcut icon" href="/favicon.ico" />`);
+
+  const result = await checkDesktopFavicon('https://example.com/', root, testFetcher({
+    'https://example.com/favicon.ico': {
+      status: 200,
+      contentType: 'image/x-icon',
+      readableStream: await filePathToReadableStream(testIconPath),
+    },
+  }));
+
+  expect(result.icons.png).toEqual({ content: null, url: null, width: null, height: null });
+  expect(result.icons.svg).toEqual({ content: null, url: null, width: null, height: null });
+  expect(result.icons.ico?.content).not.toBeNull();
+  expect(result.icon).not.toBeNull();
+  expect(result.icon).toMatch(/^data:image\/(png|bmp);base64,/);
+  expect(result.icon).toEqual(result.icons.ico?.content);
 })
