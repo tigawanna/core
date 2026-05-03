@@ -18,5 +18,6 @@ export const initWebAppManifestSettings = (): WebAppManifestSettings => ({
   name: 'MyWebSite',
   shortName: 'MySite',
   backgroundColor: '#ffffff',
-  themeColor: '#ffffff'
+  themeColor: '#ffffff',
+  icon: undefined,
 });

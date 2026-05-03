@@ -49,7 +49,7 @@ export const generateWebAppManifestIconFiles = async (
   version?: string,
 ): Promise<FaviconFiles> => {
   const transformedIcon = transformSvg(
-    masterIcon.icon, settings.transformation, imageAdapter, 512
+    settings.icon ?? masterIcon.icon, settings.transformation, imageAdapter, 512
   );
   const androidnIcon192 = await imageAdapter.convertSvgToPng(
     scaleSvg(transformedIcon, 192, imageAdapter)

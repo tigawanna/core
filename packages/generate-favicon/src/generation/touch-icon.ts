@@ -26,7 +26,7 @@ export const generateTouchIconHtml = (faviconPath: string, appTitle: string | nu
 
 export const generateTouchIconFiles = async (masterIcon: MasterIcon, settings: TouchIconSettings, imageAdapeter: ImageAdapter, skipMetadata = false): Promise<FaviconFiles> => {
   const transformedIcon = transformSvg(
-    masterIcon.icon, settings.transformation, imageAdapeter, TouchIconPngSize
+    settings.icon ?? masterIcon.icon, settings.transformation, imageAdapeter, TouchIconPngSize
   );
 
   const touchIcon = await imageAdapeter.convertSvgToPng(

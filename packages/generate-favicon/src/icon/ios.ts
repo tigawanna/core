@@ -12,5 +12,6 @@ export const initTouchIconSettings = (): TouchIconSettings => ({
     backgroundColor: '#ffffff',
     backgroundRadius: 0
   }),
-  appTitle: null
+  appTitle: null,
+  icon: undefined,
 });

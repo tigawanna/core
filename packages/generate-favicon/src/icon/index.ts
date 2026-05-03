@@ -23,6 +23,7 @@ export type FaviconSettings = {
 }
 
 export type EditedIcon = {
+  icon?: Svg,
   transformation: IconTransformation
 }
 
