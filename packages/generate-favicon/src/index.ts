@@ -46,3 +46,7 @@ export {
 export {
   normalizeFaviconPath
 } from './generation/index';
+
+export {
+  whitenFullyTransparentPixels
+} from './helper';

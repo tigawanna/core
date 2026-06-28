@@ -4,7 +4,7 @@ import { createDesktopSvgIcon } from "../svg/desktop";
 import { imagesToIco } from "../icon/ico";
 import { DesktopIconSettings } from "../icon/desktop";
 import { ImageAdapter } from "../svg/adapter";
-import { convertSvgToDataUrl } from "../helper";
+import { convertSvgToDataUrl, whitenFullyTransparentPixels } from "../helper";
 import { scaleSvg } from "../svg";
 import { addRfgMetadataToPng, addRfgMetadataToSvg } from "../metadata";
 
@@ -54,6 +54,9 @@ export const generateDesktopFaviconFiles = async (masterIcon: MasterIcon, settin
 
   const pics = await Promise.all(IcoFaviconSizes.map(async size => {
     const data = await imageAdapter.getImageData(convertSvgToDataUrl(theSvg), size);
+    // The ICO is assembled here from raw RGBA, so the transparent-background
+    // fixup belongs here too — keeping it adapter-agnostic.
+    whitenFullyTransparentPixels(data);
     return {
       data,
       width: size,

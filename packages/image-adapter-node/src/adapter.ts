@@ -1,4 +1,4 @@
-import { ImageAdapter } from '@realfavicongenerator/generate-favicon';
+import { ImageAdapter, whitenFullyTransparentPixels } from '@realfavicongenerator/generate-favicon';
 import { SVG, Svg, registerWindow } from '@svgdotjs/svg.js';
 import sharp from 'sharp';
 
@@ -21,20 +21,19 @@ export const getNodeImageAdapter = async (): Promise<ImageAdapter> => {
       return SVG(document.documentElement) as Svg;
     },
     convertSvgToPng: async (svg: Svg) => {
-      return new Promise((resolve, reject) => {
-        const svgString = svg.svg();
-        const svgBuffer = Buffer.from(svgString);
-
-        sharp(svgBuffer)
-          .png()
-          .toBuffer((err, buffer, info) => {
-            if (err) {
-              reject(err);
-            } else {
-              resolve(buffer);
-            }
-          });
-      });
+      const svgBuffer = Buffer.from(svg.svg());
+      // ensureAlpha() guarantees 4-channel RGBA so the transparent-background
+      // fixup (shared with all adapters) can run before re-encoding.
+      const { data, info } = await sharp(svgBuffer)
+        .ensureAlpha()
+        .raw()
+        .toBuffer({ resolveWithObject: true });
+      whitenFullyTransparentPixels(data);
+      return sharp(data, {
+        raw: { width: info.width, height: info.height, channels: info.channels },
+      })
+        .png()
+        .toBuffer();
     },
     getImageSize: async (dataUrl: string) => {
       const buffer = await dataUrlToBuffer(dataUrl);
