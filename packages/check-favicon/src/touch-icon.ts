@@ -2,6 +2,8 @@ import { CheckerMessage, CheckerStatus, Fetcher, MessageId, TouchIconIconReport,
 import { HTMLElement } from 'node-html-parser'
 import { CheckIconOutput, CheckIconProcessor, checkIcon, fetchFetcher, mergeUrlAndPath } from "./helper";
 
+export const TouchIconFileSize = 180;
+
 export const checkTouchIconTitle = async (baseUrl: string, head: HTMLElement | null, fetcher: Fetcher = fetchFetcher): Promise<TouchIconTitleReport> => {
   const messages: CheckerMessage[] = [];
   let appTitle = undefined;
@@ -149,8 +151,8 @@ export const checkTouchIconIcon = async (baseUrl: string, head: HTMLElement | nu
     rightSize: (width) => {
       messages.push({
         status: CheckerStatus.Ok,
-        id: MessageId.touchIconSquare,
-        text: `The touch icon is square (${width}x${width})`
+        id: MessageId.touchIcon180x180,
+        text: `The touch icon has the right size (${width}x${width})`
       });
     },
     square: (width) => {
@@ -173,7 +175,8 @@ export const checkTouchIconIcon = async (baseUrl: string, head: HTMLElement | nu
     touchIconUrl,
     processor,
     fetcher,
-    undefined
+    undefined,
+    TouchIconFileSize
   );
 
   return { messages, icon };

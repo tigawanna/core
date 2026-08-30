@@ -150,6 +150,8 @@ test('checkTouchIcon - multipleTouchIcon - specific size', async () => {
 })
 
 const testIcon = './fixtures/180x180.png';
+const smallTestIcon = './fixtures/57x57.png';
+const nonSquareTestIcon = './fixtures/non-square.png';
 
 test('checkTouchIcon - Regular case', async () => {
   await runCheckTouchIconTest(`
@@ -163,6 +165,9 @@ test('checkTouchIcon - Regular case', async () => {
   },{
     status: CheckerStatus.Ok,
     id: MessageId.touchIconSquare
+  },{
+    status: CheckerStatus.Ok,
+    id: MessageId.touchIcon180x180
   }], icon: {
       content: bufferToDataUrl(await readableStreamToBuffer(await filePathToReadableStream(testIcon)), 'image/png'),
       url: 'https://example.com/some-other-icon.png',
@@ -174,6 +179,63 @@ test('checkTouchIcon - Regular case', async () => {
       status: 200,
       contentType: 'image/png',
       readableStream: await filePathToReadableStream(testIcon)
+    }
+  });
+})
+
+test('checkTouchIcon - Square icon with the wrong size', async () => {
+  await runCheckTouchIconTest(`
+    <link rel="apple-touch-icon" href="some-other-icon.png">
+  `, { messages: [{
+    status: CheckerStatus.Ok,
+    id: MessageId.touchIconDeclared,
+  }, {
+    status: CheckerStatus.Ok,
+    id: MessageId.touchIconDownloadable,
+  },{
+    status: CheckerStatus.Ok,
+    id: MessageId.touchIconSquare
+  },{
+    status: CheckerStatus.Error,
+    id: MessageId.touchIconWrongSize
+  }], icon: {
+      content: bufferToDataUrl(await readableStreamToBuffer(await filePathToReadableStream(smallTestIcon)), 'image/png'),
+      url: 'https://example.com/some-other-icon.png',
+      width: 57,
+      height: 57,
+    }
+  }, {
+    'https://example.com/some-other-icon.png': {
+      status: 200,
+      contentType: 'image/png',
+      readableStream: await filePathToReadableStream(smallTestIcon)
+    }
+  });
+})
+
+test('checkTouchIcon - Non-square icon', async () => {
+  await runCheckTouchIconTest(`
+    <link rel="apple-touch-icon" href="some-other-icon.png">
+  `, { messages: [{
+    status: CheckerStatus.Ok,
+    id: MessageId.touchIconDeclared,
+  }, {
+    status: CheckerStatus.Ok,
+    id: MessageId.touchIconDownloadable,
+  },{
+    status: CheckerStatus.Error,
+    id: MessageId.touchIconNotSquare
+  }], icon: {
+      content: bufferToDataUrl(await readableStreamToBuffer(await filePathToReadableStream(nonSquareTestIcon)), 'image/png'),
+      url: 'https://example.com/some-other-icon.png',
+      width: 240,
+      height: 180,
+    }
+  }, {
+    'https://example.com/some-other-icon.png': {
+      status: 200,
+      contentType: 'image/png',
+      readableStream: await filePathToReadableStream(nonSquareTestIcon)
     }
   });
 })
