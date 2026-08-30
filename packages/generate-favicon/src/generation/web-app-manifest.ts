@@ -1,42 +1,51 @@
-import { FaviconAssetFileNameTransformer, FaviconAssetPathTransformer, FaviconFiles, FaviconMarkups, identityFaviconAssetFileNameTransformer, identityFaviconAssetPathTransformer } from ".";
-import { MasterIcon, transformSvg } from "../icon/helper";
-import { WebAppManifestSettings } from "../icon/web-app-manifest";
-import { scaleSvg } from "../svg";
-import { ImageAdapter } from "../svg/adapter";
-import { addRfgMetadataToPng } from "../metadata";
+import {
+  FaviconAssetFileNameTransformer,
+  FaviconAssetPathTransformer,
+  FaviconFiles,
+  FaviconMarkups,
+  identityFaviconAssetFileNameTransformer,
+  identityFaviconAssetPathTransformer,
+} from '.';
+import { MasterIcon, transformSvg } from '../icon/helper';
+import { WebAppManifestSettings } from '../icon/web-app-manifest';
+import { scaleSvg } from '../svg';
+import { ImageAdapter } from '../svg/adapter';
+import { addRfgMetadataToPng } from '../metadata';
 
 export type WebManifest = {
-  name: string,
-  short_name: string,
+  name: string;
+  short_name: string;
   icons: {
-    src: string,
-    sizes: string,
-    type: string,
-    purpose: string
-  }[],
-  theme_color: string,
-  background_color: string,
-  display: string
-}
+    src: string;
+    sizes: string;
+    type: string;
+    purpose: string;
+  }[];
+  theme_color: string;
+  background_color: string;
+  display: string;
+};
 
 export const generateWebManifest = (webManifest: WebManifest): string => {
   return JSON.stringify(webManifest, null, 2);
-}
+};
 
-export const SiteWebManifestFileName           = 'site.webmanifest';
+export const SiteWebManifestFileName = 'site.webmanifest';
 export const WebAppManifest192x192IconFileName = 'web-app-manifest-192x192.png';
 export const WebAppManifest512x512IconFileName = 'web-app-manifest-512x512.png';
 
-export const generateWebAppManifestHtml = (faviconPath: string, transformer: FaviconAssetPathTransformer = identityFaviconAssetPathTransformer, version?: string): FaviconMarkups => {
+export const generateWebAppManifestHtml = (
+  faviconPath: string,
+  transformer: FaviconAssetPathTransformer = identityFaviconAssetPathTransformer,
+  version?: string,
+): FaviconMarkups => {
   return {
     markups: [
-      `<link rel="manifest" href="${transformer(`${faviconPath}${SiteWebManifestFileName}`, false, false, version)}" />`
+      `<link rel="manifest" href="${transformer(`${faviconPath}${SiteWebManifestFileName}`, false, false, version)}" />`,
     ],
-    cssSelectors: [
-      `link[rel="manifest"]`
-    ]
+    cssSelectors: [`link[rel="manifest"]`],
   };
-}
+};
 
 export const generateWebAppManifestIconFiles = async (
   masterIcon: MasterIcon,
@@ -48,15 +57,9 @@ export const generateWebAppManifestIconFiles = async (
   skipMetadata = false,
   version?: string,
 ): Promise<FaviconFiles> => {
-  const transformedIcon = transformSvg(
-    settings.icon ?? masterIcon.icon, settings.transformation, imageAdapter, 512
-  );
-  const androidnIcon192 = await imageAdapter.convertSvgToPng(
-    scaleSvg(transformedIcon, 192, imageAdapter)
-  );
-  const androidnIcon512 = await imageAdapter.convertSvgToPng(
-    scaleSvg(transformedIcon, 512, imageAdapter)
-  );
+  const transformedIcon = transformSvg(settings.icon ?? masterIcon.icon, settings.transformation, imageAdapter, 512);
+  const androidnIcon192 = await imageAdapter.convertSvgToPng(scaleSvg(transformedIcon, 192, imageAdapter));
+  const androidnIcon512 = await imageAdapter.convertSvgToPng(scaleSvg(transformedIcon, 512, imageAdapter));
 
   const webManifest: WebManifest = {
     name: settings.name,
@@ -66,23 +69,27 @@ export const generateWebAppManifestIconFiles = async (
         src: pathTransformer(`${faviconPath}${WebAppManifest192x192IconFileName}`, true, true, version),
         sizes: '192x192',
         type: 'image/png',
-        purpose: 'maskable'
+        purpose: 'maskable',
       },
       {
         src: pathTransformer(`${faviconPath}${WebAppManifest512x512IconFileName}`, true, true, version),
         sizes: '512x512',
         type: 'image/png',
-        purpose: 'maskable'
-      }
+        purpose: 'maskable',
+      },
     ],
     theme_color: settings.themeColor,
     background_color: settings.backgroundColor,
-    display: 'standalone'
+    display: 'standalone',
   };
 
   return {
-    [fileNameTransformer(WebAppManifest192x192IconFileName)]: skipMetadata ? androidnIcon192 : addRfgMetadataToPng(androidnIcon192),
-    [fileNameTransformer(WebAppManifest512x512IconFileName)]: skipMetadata ? androidnIcon512 : addRfgMetadataToPng(androidnIcon512),
-    [fileNameTransformer(SiteWebManifestFileName)]: generateWebManifest(webManifest)
+    [fileNameTransformer(WebAppManifest192x192IconFileName)]: skipMetadata
+      ? androidnIcon192
+      : addRfgMetadataToPng(androidnIcon192),
+    [fileNameTransformer(WebAppManifest512x512IconFileName)]: skipMetadata
+      ? androidnIcon512
+      : addRfgMetadataToPng(androidnIcon512),
+    [fileNameTransformer(SiteWebManifestFileName)]: generateWebManifest(webManifest),
   };
-}
+};

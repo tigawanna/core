@@ -3,4 +3,4 @@
 export const filterDoctypeOut = (svg: string): string => {
   const doctypeRegex = /<!DOCTYPE[^>]*>/gi;
   return svg.replace(doctypeRegex, '');
-}
+};

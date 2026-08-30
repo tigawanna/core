@@ -14,4 +14,4 @@ export const inject = async (markupsFile: string, outputDir: string, htmlFiles: 
     const injected = injectMarkupInHtmlHead(content, markups.markups, markups.cssSelectors);
     await fs.writeFile(path.join(outputDir, path.basename(htmlFile)), injected);
   }
-}
+};

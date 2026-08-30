@@ -1,25 +1,27 @@
-import { HTMLElement } from 'node-html-parser'
-import { mergeUrlAndPath } from "../helper";
+import { HTMLElement } from 'node-html-parser';
+import { mergeUrlAndPath } from '../helper';
 
 export type IconFormat = 'ico' | 'svg' | 'png';
 
 // The `type` attribute is only a hint, but when it is there it is authoritative.
 const formatMimeTypes: { [format in IconFormat]: string[] } = {
-  ico: [ 'image/x-icon', 'image/vnd.microsoft.icon' ],
-  svg: [ 'image/svg+xml' ],
-  png: [ 'image/png' ]
+  ico: ['image/x-icon', 'image/vnd.microsoft.icon'],
+  svg: ['image/svg+xml'],
+  png: ['image/png'],
 };
 
 // Fallback when the declaration has no `type` attribute.
 const formatExtensions: { [format in IconFormat]: string[] } = {
-  ico: [ 'ico' ],
-  svg: [ 'svg' ],
-  png: [ 'png' ]
+  ico: ['ico'],
+  svg: ['svg'],
+  png: ['png'],
 };
 
-const relTokens = (markup: HTMLElement): string[] => (
-  (markup.attributes.rel || '').toLowerCase().split(/\s+/).filter(token => token.length > 0)
-);
+const relTokens = (markup: HTMLElement): string[] =>
+  (markup.attributes.rel || '')
+    .toLowerCase()
+    .split(/\s+/)
+    .filter(token => token.length > 0);
 
 const hrefExtension = (href: string | undefined): string | null => {
   if (!href) {
@@ -34,11 +36,10 @@ const hrefExtension = (href: string | undefined): string | null => {
   }
 
   return lastSegment.slice(dot + 1).toLowerCase();
-}
+};
 
-const findFormat = (candidates: { [format in IconFormat]: string[] }, value: string): IconFormat | null => (
-  (Object.keys(candidates) as IconFormat[]).find(format => candidates[format].includes(value)) || null
-);
+const findFormat = (candidates: { [format in IconFormat]: string[] }, value: string): IconFormat | null =>
+  (Object.keys(candidates) as IconFormat[]).find(format => candidates[format].includes(value)) || null;
 
 /**
  * The format a `<link rel="icon">` markup declares, or null when it cannot be told.
@@ -63,20 +64,21 @@ export const iconMarkupFormat = (markup: HTMLElement): IconFormat | null => {
   }
 
   return null;
-}
+};
 
 export type IconDeclaration = {
-  markup: HTMLElement,
-  href: string | null,
+  markup: HTMLElement;
+  href: string | null;
   // The href resolved against the page URL, null when there is no href
-  url: string | null
-}
+  url: string | null;
+};
 
 /**
  * All the favicon declarations of the given format, in document order.
  */
-export const findIconDeclarations = (baseUrl: string, head: HTMLElement, format: IconFormat): IconDeclaration[] => (
-  head.querySelectorAll('link')
+export const findIconDeclarations = (baseUrl: string, head: HTMLElement, format: IconFormat): IconDeclaration[] =>
+  head
+    .querySelectorAll('link')
     .filter(markup => relTokens(markup).includes('icon'))
     .filter(markup => iconMarkupFormat(markup) === format)
     .map(markup => {
@@ -84,19 +86,18 @@ export const findIconDeclarations = (baseUrl: string, head: HTMLElement, format:
       return {
         markup,
         href,
-        url: href ? mergeUrlAndPath(baseUrl, href) : null
+        url: href ? mergeUrlAndPath(baseUrl, href) : null,
       };
-    })
-);
+    });
 
 export type ResolvedIconDeclarations = {
   // The declarations that do have an href
-  withHref: IconDeclaration[],
+  withHref: IconDeclaration[];
   // Their resolved URLs, deduplicated, in document order
-  distinctUrls: string[],
+  distinctUrls: string[];
   // The declaration a browser would use: the last one wins
-  winner: IconDeclaration | null
-}
+  winner: IconDeclaration | null;
+};
 
 /**
  * Resolve competing declarations the way a browser does: the same file declared
@@ -112,6 +113,6 @@ export const resolveIconDeclarations = (declarations: IconDeclaration[]): Resolv
   return {
     withHref,
     distinctUrls,
-    winner: withHref.length > 0 ? withHref[withHref.length - 1] : null
+    winner: withHref.length > 0 ? withHref[withHref.length - 1] : null,
   };
-}
+};

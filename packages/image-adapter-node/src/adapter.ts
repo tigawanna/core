@@ -8,7 +8,7 @@ const dataUrlToBuffer = async (dataUrl: string): Promise<Buffer> => {
     const buffer = Buffer.from(base64, 'base64');
     resolve(buffer);
   });
-}
+};
 
 export const getNodeImageAdapter = async (): Promise<ImageAdapter> => {
   const { createSVGWindow } = await import('svgdom');
@@ -16,7 +16,7 @@ export const getNodeImageAdapter = async (): Promise<ImageAdapter> => {
   return {
     createSvg: () => {
       const window = createSVGWindow();
-      const document = window.document
+      const document = window.document;
       registerWindow(window, document);
       return SVG(document.documentElement) as Svg;
     },
@@ -24,10 +24,7 @@ export const getNodeImageAdapter = async (): Promise<ImageAdapter> => {
       const svgBuffer = Buffer.from(svg.svg());
       // ensureAlpha() guarantees 4-channel RGBA so the transparent-background
       // fixup (shared with all adapters) can run before re-encoding.
-      const { data, info } = await sharp(svgBuffer)
-        .ensureAlpha()
-        .raw()
-        .toBuffer({ resolveWithObject: true });
+      const { data, info } = await sharp(svgBuffer).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
       whitenFullyTransparentPixels(data);
       return sharp(data, {
         raw: { width: info.width, height: info.height, channels: info.channels },
@@ -39,19 +36,19 @@ export const getNodeImageAdapter = async (): Promise<ImageAdapter> => {
       const buffer = await dataUrlToBuffer(dataUrl);
       return new Promise((resolve, reject) => {
         sharp(buffer)
-        .metadata()
-        .then(metadata => {
-          const width = metadata.width;
-          const height = metadata.height;
-          if (width === undefined || height === undefined) {
-            reject('Failed to get image metadata');
-          } else {
-            resolve({ width, height });
-          }
-        })
-        .catch(err => {
-          reject(err);
-        });
+          .metadata()
+          .then(metadata => {
+            const width = metadata.width;
+            const height = metadata.height;
+            if (width === undefined || height === undefined) {
+              reject('Failed to get image metadata');
+            } else {
+              resolve({ width, height });
+            }
+          })
+          .catch(err => {
+            reject(err);
+          });
       });
     },
     getImageData: async (dataUrl: string, widthHeight: number) => {
@@ -68,6 +65,6 @@ export const getNodeImageAdapter = async (): Promise<ImageAdapter> => {
             }
           });
       });
-    }
-  }
+    },
+  };
 };

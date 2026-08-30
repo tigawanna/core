@@ -5,10 +5,10 @@ import fs from 'fs/promises';
 import { getNodeImageAdapter } from '@realfavicongenerator/image-adapter-node';
 
 export type GenerateFaviconParams = {
-  masterIcon: string,
-  dest: string,
-  settings: FaviconSettings,
-  markupFile: string
+  masterIcon: string;
+  dest: string;
+  settings: FaviconSettings;
+  markupFile: string;
 };
 
 const toBuffer = async (data: string | Buffer | Blob): Promise<Buffer> => {
@@ -32,7 +32,7 @@ const toBuffer = async (data: string | Buffer | Blob): Promise<Buffer> => {
     });
   }
   return Buffer.from(data, 'utf8');
-}
+};
 
 export const generateFavicon = async (params: GenerateFaviconParams, callback: (err?: string) => void) => {
   const imageAdapter = await getNodeImageAdapter();
@@ -57,4 +57,4 @@ export const generateFavicon = async (params: GenerateFaviconParams, callback: (
   fs.writeFile(params.markupFile, JSON.stringify(html, null, 2));
 
   callback();
-}
+};

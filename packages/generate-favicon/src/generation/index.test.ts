@@ -1,4 +1,4 @@
-import { normalizeFaviconPath } from ".";
+import { normalizeFaviconPath } from '.';
 
 test('normalizeFaviconPath', () => {
   expect(normalizeFaviconPath('/')).toEqual('/');
@@ -11,4 +11,4 @@ test('normalizeFaviconPath', () => {
   expect(normalizeFaviconPath('/path/to/favicon')).toEqual('/path/to/favicon/');
   expect(normalizeFaviconPath('/path/to/favicon/')).toEqual('/path/to/favicon/');
   expect(normalizeFaviconPath('path/to/favicon')).toEqual('/path/to/favicon/');
-})
+});

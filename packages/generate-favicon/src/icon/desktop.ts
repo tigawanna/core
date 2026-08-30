@@ -1,5 +1,5 @@
-import { Svg } from "@svgdotjs/svg.js";
-import { IconTransformation, IconTransformationType, MasterIcon, initTransformation } from "./helper";
+import { Svg } from '@svgdotjs/svg.js';
+import { IconTransformation, IconTransformationType, MasterIcon, initTransformation } from './helper';
 
 export type DesktopIconSettings = {
   // Regular icon
@@ -14,32 +14,31 @@ export const initDesktopIconSettings = (): DesktopIconSettings => ({
   darkIconTransformation: initTransformation(IconTransformationType.None, {
     imageScale: 0.7,
     backgroundColor: '#ffffff',
-    backgroundRadius: 0.7
+    backgroundRadius: 0.7,
   }),
   darkIconType: 'none',
   regularIconTransformation: initTransformation(IconTransformationType.None, {
     imageScale: 0.7,
     backgroundColor: '#ffffff',
-    backgroundRadius: 0.7
-  })
+    backgroundRadius: 0.7,
+  }),
 });
 
-export const getAppliedDarkIcon = (masterIcon: MasterIcon, settings: DesktopIconSettings): {
-  darkIcon: Svg, darkIconTransformation: IconTransformation
+export const getAppliedDarkIcon = (
+  masterIcon: MasterIcon,
+  settings: DesktopIconSettings,
+): {
+  darkIcon: Svg;
+  darkIconTransformation: IconTransformation;
 } => {
-  const darkIcon = (settings.darkIconType === 'specific' && masterIcon.darkIcon)
-    ? masterIcon.darkIcon
-    : masterIcon.icon;
-  const darkIconTransformation = settings.darkIconType === 'none'
-    ? settings.regularIconTransformation
-    : settings.darkIconTransformation;
+  const darkIcon = settings.darkIconType === 'specific' && masterIcon.darkIcon ? masterIcon.darkIcon : masterIcon.icon;
+  const darkIconTransformation =
+    settings.darkIconType === 'none' ? settings.regularIconTransformation : settings.darkIconTransformation;
 
   return {
     darkIcon,
-    darkIconTransformation
-  }
-}
+    darkIconTransformation,
+  };
+};
 
-export const hasDarkIcon = (settings: DesktopIconSettings): boolean => (
-  settings.darkIconType !== 'none'
-);
+export const hasDarkIcon = (settings: DesktopIconSettings): boolean => settings.darkIconType !== 'none';

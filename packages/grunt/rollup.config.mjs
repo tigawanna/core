@@ -5,9 +5,7 @@ export default {
   input: 'src/index.ts',
   output: {
     dir: 'tasks',
-    format: 'commonjs'
+    format: 'commonjs',
   },
-  plugins: [
-    typescript(),
-  ]
+  plugins: [typescript()],
 };

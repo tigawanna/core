@@ -1,8 +1,8 @@
-import { Svg } from "@svgdotjs/svg.js";
+import { Svg } from '@svgdotjs/svg.js';
 
 export const convertBufferToDataUrl = (content: Buffer, mimeType: string): string => {
   return `data:${mimeType};base64,${content.toString('base64')}`;
-}
+};
 
 // When an SVG rasterizes to a transparent background, the rasterizer leaves the
 // fully transparent pixels as (0, 0, 0, 0). Most consumers honor the alpha
@@ -16,11 +16,9 @@ export const convertBufferToDataUrl = (content: Buffer, mimeType: string): strin
 // every ImageAdapter (Node/Sharp, browser/Canvas, ...) shares the same rule.
 // The structural type accepts a Node Buffer, a Uint8Array and a browser
 // Uint8ClampedArray (e.g. ImageData.data) without coupling to any of them.
-type MutableRgbaBuffer = { readonly length: number;[index: number]: number };
+type MutableRgbaBuffer = { readonly length: number; [index: number]: number };
 
-export const whitenFullyTransparentPixels = <T extends MutableRgbaBuffer>(
-  rgba: T
-): T => {
+export const whitenFullyTransparentPixels = <T extends MutableRgbaBuffer>(rgba: T): T => {
   for (let i = 0; i < rgba.length; i += 4) {
     if (rgba[i + 3] === 0) {
       rgba[i] = 255;
@@ -29,8 +27,8 @@ export const whitenFullyTransparentPixels = <T extends MutableRgbaBuffer>(
     }
   }
   return rgba;
-}
+};
 
 export const convertSvgToDataUrl = (svg: Svg): string => {
   return convertBufferToDataUrl(Buffer.from(svg.svg()), 'image/svg+xml');
-}
+};

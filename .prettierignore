@@ -1,0 +1,17 @@
+# Build output
+packages/*/dist/
+packages/*/*/dist/
+
+# Lockfiles
+package-lock.json
+**/package-lock.json
+
+# Local scratch output
+test-output/
+
+# Test fixtures and expected outputs: these are compared byte for byte by the
+# test suites, so reformatting them would break the tests.
+packages/*/fixtures/
+packages/grunt/test/expected/
+packages/grunt/test/fixtures/
+packages/gulp/test-project/index.html

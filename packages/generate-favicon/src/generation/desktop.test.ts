@@ -1,4 +1,10 @@
-import { generateDesktopFaviconHtml, IcoFaviconFileName, PngFaviconFileName, PngFaviconFileSize, SvgFaviconFileName } from "./desktop";
+import {
+  generateDesktopFaviconHtml,
+  IcoFaviconFileName,
+  PngFaviconFileName,
+  PngFaviconFileSize,
+  SvgFaviconFileName,
+} from './desktop';
 
 test('generateDesktopFaviconHtml generates correct markups and CSS selectors', () => {
   const result = generateDesktopFaviconHtml('/favicon/');

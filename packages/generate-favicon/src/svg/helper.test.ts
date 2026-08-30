@@ -1,13 +1,15 @@
-import { filterDoctypeOut } from "./helper";
+import { filterDoctypeOut } from './helper';
 
 test('filterDoctypeOut', () => {
-  expect(filterDoctypeOut(`
+  expect(
+    filterDoctypeOut(`
   <?xml version="1.0" standalone="no"?>
   <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
   <svg width="5cm" height="4cm" version="1.1"
         xmlns="http://www.w3.org/2000/svg">
   </svg>
-  `)).toEqual(`
+  `),
+  ).toEqual(`
   <?xml version="1.0" standalone="no"?>
   
   <svg width="5cm" height="4cm" version="1.1"
@@ -15,7 +17,8 @@ test('filterDoctypeOut', () => {
   </svg>
   `);
 
-  expect(filterDoctypeOut(`
+  expect(
+    filterDoctypeOut(`
 <?xml version="1.0" standalone="no"?>
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" 
   "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
@@ -33,7 +36,8 @@ test('filterDoctypeOut', () => {
         fill="none" stroke="blue" stroke-width=".02cm" />
 
 </svg>
-`)).toEqual(`
+`),
+  ).toEqual(`
 <?xml version="1.0" standalone="no"?>
 
 <svg width="5cm" height="4cm" version="1.1"

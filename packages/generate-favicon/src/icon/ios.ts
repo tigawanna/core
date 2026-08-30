@@ -1,16 +1,16 @@
-import { Svg } from "@svgdotjs/svg.js";
-import { IconTransformationType, initTransformation } from "./helper";
-import { EditedIcon } from ".";
+import { Svg } from '@svgdotjs/svg.js';
+import { IconTransformationType, initTransformation } from './helper';
+import { EditedIcon } from '.';
 
 export type TouchIconSettings = {
-  appTitle: string | null
+  appTitle: string | null;
 } & EditedIcon;
 
 export const initTouchIconSettings = (): TouchIconSettings => ({
   transformation: initTransformation(IconTransformationType.None, {
     imageScale: 0.7,
     backgroundColor: '#ffffff',
-    backgroundRadius: 0
+    backgroundRadius: 0,
   }),
   appTitle: null,
   icon: undefined,

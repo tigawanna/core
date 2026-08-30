@@ -1,11 +1,9 @@
-import { Svg, SVG } from "@svgdotjs/svg.js";
-import { ImageAdapter } from "../svg/adapter";
-
+import { Svg, SVG } from '@svgdotjs/svg.js';
+import { ImageAdapter } from '../svg/adapter';
 
 // Returns a string that can be assigned to a.href as is.
-export const rawDataToDownloadableContent = (content: string, mimeType: string): string => (
-  'data:' + mimeType + ';charset=utf-8,' + encodeURIComponent(content)
-);
+export const rawDataToDownloadableContent = (content: string, mimeType: string): string =>
+  'data:' + mimeType + ';charset=utf-8,' + encodeURIComponent(content);
 
 export const stringToSvg = (svg: string, imageAdapter: ImageAdapter): Svg => {
   const s = imageAdapter.createSvg();

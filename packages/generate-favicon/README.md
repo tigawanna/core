@@ -22,7 +22,14 @@ npm install @realfavicongenerator/generate-favicon @realfavicongenerator/image-a
 Usage:
 
 ```js
-import { FaviconSettings, MasterIcon, bitmapToSvg, dataUrlToSvg, generateFaviconFiles, generateFaviconHtml, stringToSvg } from '@realfavicongenerator/generate-favicon';
-import { getNodeImageAdapter, loadAndConvertToSvg } from "@realfavicongenerator/image-adapter-node";
-
+import {
+  FaviconSettings,
+  MasterIcon,
+  bitmapToSvg,
+  dataUrlToSvg,
+  generateFaviconFiles,
+  generateFaviconHtml,
+  stringToSvg,
+} from '@realfavicongenerator/generate-favicon';
+import { getNodeImageAdapter, loadAndConvertToSvg } from '@realfavicongenerator/image-adapter-node';
 ```

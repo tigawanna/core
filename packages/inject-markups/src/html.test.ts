@@ -1,8 +1,7 @@
-import { injectMarkupInHtmlHead } from "./html";
+import { injectMarkupInHtmlHead } from './html';
 
 test('injectMarktupInHtml - Add markups', () => {
-  const input =
-`<html>
+  const input = `<html>
 
   <head>
     <title>Test Document</title>
@@ -15,14 +14,17 @@ test('injectMarktupInHtml - Add markups', () => {
 
 </html>`;
 
-  expect(injectMarkupInHtmlHead(
-    input,
-    [
-      '<link rel="icon" type="image/png" href="favicons/favicon-192x192.png" sizes="192x192">',
-      '<link rel="icon" type="image/png" href="favicons/favicon-160x160.png" sizes="160x160">'
-    ], []
-  )).toBe(
-`<html>
+  expect(
+    injectMarkupInHtmlHead(
+      input,
+      [
+        '<link rel="icon" type="image/png" href="favicons/favicon-192x192.png" sizes="192x192">',
+        '<link rel="icon" type="image/png" href="favicons/favicon-160x160.png" sizes="160x160">',
+      ],
+      [],
+    ),
+  ).toBe(
+    `<html>
 
   <head>
     <title>Test Document</title>
@@ -37,13 +39,12 @@ test('injectMarktupInHtml - Add markups', () => {
 
   </body>
 
-</html>`
+</html>`,
   );
 });
 
 test('injectMarktupInHtml - Add and remove markups', () => {
-  const input =
-`<html>
+  const input = `<html>
 
   <head>
     <title>Test Document</title>
@@ -56,17 +57,17 @@ test('injectMarktupInHtml - Add and remove markups', () => {
 
 </html>`;
 
-  expect(injectMarkupInHtmlHead(
-    input,
-    [
-      '<link rel="icon" type="image/png" href="favicons/favicon-192x192.png" sizes="192x192">',
-      '<link rel="icon" type="image/png" href="favicons/favicon-160x160.png" sizes="160x160">'
-    ],
-    [
-      'meta[name="description"]'
-    ]
-  )).toBe(
-`<html>
+  expect(
+    injectMarkupInHtmlHead(
+      input,
+      [
+        '<link rel="icon" type="image/png" href="favicons/favicon-192x192.png" sizes="192x192">',
+        '<link rel="icon" type="image/png" href="favicons/favicon-160x160.png" sizes="160x160">',
+      ],
+      ['meta[name="description"]'],
+    ),
+  ).toBe(
+    `<html>
 
   <head>
     <title>Test Document</title>
@@ -81,6 +82,6 @@ test('injectMarktupInHtml - Add and remove markups', () => {
 
   </body>
 
-</html>`
+</html>`,
   );
 });

@@ -1,13 +1,20 @@
-import { SVG, Style, Svg } from "@svgdotjs/svg.js";
-import { IconTransformation, IconTransformationType, MasterIcon, getCSSFilter, isCSSFilterTransformation, transformSvg } from "../icon/helper";
-import { DesktopIconSettings, hasDarkIcon } from "../icon/desktop";
-import { ImageAdapter } from "./adapter";
-import { stringToSvg } from ".";
+import { SVG, Style, Svg } from '@svgdotjs/svg.js';
+import {
+  IconTransformation,
+  IconTransformationType,
+  MasterIcon,
+  getCSSFilter,
+  isCSSFilterTransformation,
+  transformSvg,
+} from '../icon/helper';
+import { DesktopIconSettings, hasDarkIcon } from '../icon/desktop';
+import { ImageAdapter } from './adapter';
+import { stringToSvg } from '.';
 
 export const createDesktopSvgIcon = (
   masterIcon: MasterIcon,
   settings: DesktopIconSettings,
-  imageAdapter: ImageAdapter
+  imageAdapter: ImageAdapter,
 ): Svg => {
   // No transformation and no dark icon variant: return the icon as-is
   if (!hasDarkIcon(settings) && settings.regularIconTransformation.type === IconTransformationType.None) {
@@ -16,25 +23,19 @@ export const createDesktopSvgIcon = (
 
   // Special case for icons that only play with brightness or color inversion
   if (
-    (
-      // This optimization is possible when there is only a single icon to work on
-      settings.darkIconType !== 'specific'
-    )
-    &&
-    (
-      isCSSFilterTransformation(settings.regularIconTransformation.type) ||
-      settings.regularIconTransformation.type === IconTransformationType.None
-    )
-    &&
-    (
-      !hasDarkIcon(settings) ||
+    // This optimization is possible when there is only a single icon to work on
+    settings.darkIconType !== 'specific' &&
+    (isCSSFilterTransformation(settings.regularIconTransformation.type) ||
+      settings.regularIconTransformation.type === IconTransformationType.None) &&
+    (!hasDarkIcon(settings) ||
       isCSSFilterTransformation(settings.darkIconTransformation.type) ||
-      settings.darkIconTransformation.type === IconTransformationType.None
-    )
+      settings.darkIconTransformation.type === IconTransformationType.None)
   ) {
     return createFilteredSvgIcon(
-      masterIcon.icon, imageAdapter, settings.regularIconTransformation,
-      hasDarkIcon(settings) ? settings.darkIconTransformation : undefined
+      masterIcon.icon,
+      imageAdapter,
+      settings.regularIconTransformation,
+      hasDarkIcon(settings) ? settings.darkIconTransformation : undefined,
     );
   }
 
@@ -50,7 +51,12 @@ export const createDesktopSvgIcon = (
   return combineLightAndDaskModeDesktopIcons(lightIcon, darkIcon, imageAdapter);
 };
 
-export const createFilteredSvgIcon = (image: Svg, imageAdapter: ImageAdapter, lightSettings?: IconTransformation, darkSettings?: IconTransformation): Svg => {
+export const createFilteredSvgIcon = (
+  image: Svg,
+  imageAdapter: ImageAdapter,
+  lightSettings?: IconTransformation,
+  darkSettings?: IconTransformation,
+): Svg => {
   const icon = cloneSvg(image, imageAdapter);
 
   if (!lightSettings && !darkSettings) {
@@ -77,7 +83,7 @@ export const createFilteredSvgIcon = (image: Svg, imageAdapter: ImageAdapter, li
 export const cloneSvg = (svg: Svg, imageAdapter: ImageAdapter): Svg => {
   const svgString = svg.svg();
   return stringToSvg(svgString, imageAdapter);
-}
+};
 
 export const combineLightAndDaskModeDesktopIcons = (lightIcon: Svg, darkIcon: Svg, imageAdapter: ImageAdapter): Svg => {
   const s = imageAdapter.createSvg().size(1000, 1000);
@@ -111,4 +117,4 @@ export const combineLightAndDaskModeDesktopIcons = (lightIcon: Svg, darkIcon: Sv
   darkGroup.svg(darkIcon.svg());
 
   return s;
-}
+};

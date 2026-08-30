@@ -1,4 +1,3 @@
-
 /*
  * grunt-real-favicon
  * https://github.com/RealFaviconGenerator/core
@@ -9,10 +8,10 @@
 
 'use strict';
 
-import { generateFavicon } from "./generate-favicon";
+import { generateFavicon } from './generate-favicon';
 
-module.exports = function(grunt: IGrunt) {
-  grunt.registerMultiTask('realFavicon', 'Your favicon with RealFaviconGenerator and Grunt', function() {
+module.exports = function (grunt: IGrunt) {
+  grunt.registerMultiTask('realFavicon', 'Your favicon with RealFaviconGenerator and Grunt', function () {
     const done = this.async();
     generateFavicon(this).then(() => done());
   });

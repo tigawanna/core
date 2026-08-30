@@ -1,25 +1,36 @@
-import { CheckerMessage, CheckerStatus, DesktopFaviconReport, DesktopSingleReport, Fetcher, MessageId } from "../types";
-import { HTMLElement } from 'node-html-parser'
-import sharp from 'sharp'
-import { CheckIconProcessor, bufferToDataUrl, checkIcon, fetchFetcher, mergeUrlAndPath, readableStreamToString } from "../helper";
-import { checkIcoFavicon } from "./ico";
-import { findIconDeclarations, resolveIconDeclarations } from "./declarations";
+import { CheckerMessage, CheckerStatus, DesktopFaviconReport, DesktopSingleReport, Fetcher, MessageId } from '../types';
+import { HTMLElement } from 'node-html-parser';
+import sharp from 'sharp';
+import {
+  CheckIconProcessor,
+  bufferToDataUrl,
+  checkIcon,
+  fetchFetcher,
+  mergeUrlAndPath,
+  readableStreamToString,
+} from '../helper';
+import { checkIcoFavicon } from './ico';
+import { findIconDeclarations, resolveIconDeclarations } from './declarations';
 
 export const PngFaviconFileSize = 96;
 
-export const checkSvgFavicon = async (baseUrl: string, head: HTMLElement | null, fetcher: Fetcher = fetchFetcher): Promise<DesktopSingleReport> => {
+export const checkSvgFavicon = async (
+  baseUrl: string,
+  head: HTMLElement | null,
+  fetcher: Fetcher = fetchFetcher,
+): Promise<DesktopSingleReport> => {
   const messages: CheckerMessage[] = [];
 
   if (!head) {
     messages.push({
       status: CheckerStatus.Error,
       id: MessageId.noHead,
-      text: 'No <head> element'
+      text: 'No <head> element',
     });
 
     return {
       messages,
-      icon: { content: null, url: null, width: null, height: null }
+      icon: { content: null, url: null, width: null, height: null },
     };
   }
 
@@ -28,13 +39,13 @@ export const checkSvgFavicon = async (baseUrl: string, head: HTMLElement | null,
     messages.push({
       status: CheckerStatus.Error,
       id: MessageId.noSvgFavicon,
-      text: 'There is no SVG favicon'
+      text: 'There is no SVG favicon',
     });
   } else {
     messages.push({
       status: CheckerStatus.Ok,
       id: MessageId.svgFaviconDeclared,
-      text: 'The SVG favicon is declared'
+      text: 'The SVG favicon is declared',
     });
 
     const { withHref, distinctUrls, winner } = resolveIconDeclarations(svgs);
@@ -42,38 +53,42 @@ export const checkSvgFavicon = async (baseUrl: string, head: HTMLElement | null,
       messages.push({
         status: CheckerStatus.Error,
         id: MessageId.noSvgFaviconHref,
-        text: 'The SVG markup has no href attribute'
+        text: 'The SVG markup has no href attribute',
       });
     } else {
       if (distinctUrls.length > 1) {
         messages.push({
           status: CheckerStatus.Warning,
           id: MessageId.multipleSvgFavicons,
-          text: `There are ${distinctUrls.length} SVG favicons (${distinctUrls.join(', ')}). Browsers use the last one, ${winner.url}`
+          text: `There are ${distinctUrls.length} SVG favicons (${distinctUrls.join(', ')}). Browsers use the last one, ${winner.url}`,
         });
       } else if (withHref.length > 1) {
         messages.push({
           status: CheckerStatus.Warning,
           id: MessageId.duplicatedSvgFaviconDeclarations,
-          text: `The SVG favicon ${winner.url} is declared ${withHref.length} times`
+          text: `The SVG favicon ${winner.url} is declared ${withHref.length} times`,
         });
       }
 
-      const iconReport = await checkSvgFaviconFile(baseUrl, winner.href as string, fetcher)
+      const iconReport = await checkSvgFaviconFile(baseUrl, winner.href as string, fetcher);
       return {
-        messages: [ ...messages, ...iconReport.messages ],
-        icon: iconReport.icon
+        messages: [...messages, ...iconReport.messages],
+        icon: iconReport.icon,
       };
     }
   }
 
   return {
     messages,
-    icon: { content: null, url: null, width: null, height: null }
+    icon: { content: null, url: null, width: null, height: null },
   };
-}
+};
 
-export const checkSvgFaviconFile = async (baseUrl: string, url: string, fetcher: Fetcher): Promise<DesktopSingleReport> => {
+export const checkSvgFaviconFile = async (
+  baseUrl: string,
+  url: string,
+  fetcher: Fetcher,
+): Promise<DesktopSingleReport> => {
   const messages: CheckerMessage[] = [];
 
   const svgUrl = mergeUrlAndPath(baseUrl, url);
@@ -86,19 +101,19 @@ export const checkSvgFaviconFile = async (baseUrl: string, url: string, fetcher:
     messages.push({
       status: CheckerStatus.Error,
       id: MessageId.svgFavicon404,
-      text: `The SVG icon file \`${url}\` does not exist (404 error)`
+      text: `The SVG icon file \`${url}\` does not exist (404 error)`,
     });
   } else if (res.status >= 300) {
     messages.push({
       status: CheckerStatus.Error,
       id: MessageId.svgFaviconCannotGet,
-      text: `Cannot get the SVG icon file at \`${url}\` (${res.status} error)`
+      text: `Cannot get the SVG icon file at \`${url}\` (${res.status} error)`,
     });
   } else if (res.readableStream) {
     messages.push({
       status: CheckerStatus.Ok,
       id: MessageId.svgFaviconDownloadable,
-      text: `The SVG favicon is accessible at \`${url}\``
+      text: `The SVG favicon is accessible at \`${url}\``,
     });
 
     content = await readableStreamToString(res.readableStream);
@@ -110,13 +125,13 @@ export const checkSvgFaviconFile = async (baseUrl: string, url: string, fetcher:
       messages.push({
         status: CheckerStatus.Error,
         id: MessageId.svgFaviconNotSquare,
-        text: `The SVG is not square (${width}x${height})`
+        text: `The SVG is not square (${width}x${height})`,
       });
     } else {
       messages.push({
         status: CheckerStatus.Ok,
         id: MessageId.svgFaviconSquare,
-        text: `The SVG is square (${width}x${height})`
+        text: `The SVG is square (${width}x${height})`,
       });
     }
   }
@@ -126,19 +141,24 @@ export const checkSvgFaviconFile = async (baseUrl: string, url: string, fetcher:
     icon: {
       content: content ? await bufferToDataUrl(Buffer.from(content), 'image/svg+xml') : null,
       url: svgUrl,
-      width, height
-    }
+      width,
+      height,
+    },
   };
-}
+};
 
-export const checkPngFavicon = async (baseUrl: string, head: HTMLElement | null, fetcher: Fetcher = fetchFetcher): Promise<DesktopSingleReport> => {
+export const checkPngFavicon = async (
+  baseUrl: string,
+  head: HTMLElement | null,
+  fetcher: Fetcher = fetchFetcher,
+): Promise<DesktopSingleReport> => {
   const messages: CheckerMessage[] = [];
 
   if (!head) {
     messages.push({
       status: CheckerStatus.Error,
       id: MessageId.noHead,
-      text: 'No <head> element'
+      text: 'No <head> element',
     });
 
     return { messages, icon: { content: null, url: null, width: null, height: null } };
@@ -149,7 +169,7 @@ export const checkPngFavicon = async (baseUrl: string, head: HTMLElement | null,
     messages.push({
       status: CheckerStatus.Error,
       id: MessageId.noDesktopPngFavicon,
-      text: 'There is no desktop PNG favicon'
+      text: 'There is no desktop PNG favicon',
     });
   } else {
     const size = `${PngFaviconFileSize}x${PngFaviconFileSize}`;
@@ -159,13 +179,13 @@ export const checkPngFavicon = async (baseUrl: string, head: HTMLElement | null,
       messages.push({
         status: CheckerStatus.Error,
         id: MessageId.no96x96DesktopPngFavicon,
-        text: `There is no ${size} desktop PNG favicon`
+        text: `There is no ${size} desktop PNG favicon`,
       });
     } else {
       messages.push({
         status: CheckerStatus.Ok,
         id: MessageId.desktopPngFaviconDeclared,
-        text: `The ${size} desktop PNG favicon is declared`
+        text: `The ${size} desktop PNG favicon is declared`,
       });
 
       const href = sizedIconMarkup[0].attributes.href;
@@ -173,71 +193,81 @@ export const checkPngFavicon = async (baseUrl: string, head: HTMLElement | null,
         messages.push({
           status: CheckerStatus.Error,
           id: MessageId.noDesktopPngFaviconHref,
-          text: `The ${size} desktop favicon markup has no href attribute`
+          text: `The ${size} desktop favicon markup has no href attribute`,
         });
       } else {
         const iconUrl = mergeUrlAndPath(baseUrl, href);
         const processor: CheckIconProcessor = {
-          cannotGet: (httpStatus) => {
+          cannotGet: httpStatus => {
             messages.push({
               status: CheckerStatus.Error,
               id: MessageId.desktopPngFaviconCannotGet,
-              text: `Cannot get the ${size} desktop PNG favicon at \`${iconUrl}\` (${httpStatus} error)`
+              text: `Cannot get the ${size} desktop PNG favicon at \`${iconUrl}\` (${httpStatus} error)`,
             });
           },
           downloadable: () => {
             messages.push({
               status: CheckerStatus.Ok,
               id: MessageId.desktopPngFaviconDownloadable,
-              text: `The ${size} desktop PNG favicon is accessible`
+              text: `The ${size} desktop PNG favicon is accessible`,
             });
           },
           icon404: () => {
             messages.push({
               status: CheckerStatus.Error,
               id: MessageId.desktopPngFavicon404,
-              text: `The ${size} desktop PNG favicon does not exist (404 error)`
+              text: `The ${size} desktop PNG favicon does not exist (404 error)`,
             });
           },
           notSquare: (width, height) => {}, // Ignore this message
-          wrongSize: (widthHeight) => {
+          wrongSize: widthHeight => {
             messages.push({
               status: CheckerStatus.Error,
               id: MessageId.desktopPngFaviconWrongSize,
-              text: `The ${size} desktop PNG favicon has the wrong size (${widthHeight}x${widthHeight})`
+              text: `The ${size} desktop PNG favicon has the wrong size (${widthHeight}x${widthHeight})`,
             });
           },
           rightSize(widthHeight) {
             messages.push({
               status: CheckerStatus.Ok,
               id: MessageId.desktopPngFaviconRightSize,
-              text: `The ${size} desktop PNG favicon has the right size`
+              text: `The ${size} desktop PNG favicon has the right size`,
             });
           },
-          square: (widthHeight) => {}, // Ignore this message,
-          noHref: () => {} // Ignore this message
+          square: widthHeight => {}, // Ignore this message,
+          noHref: () => {}, // Ignore this message
         };
-        const icon = await checkIcon(iconUrl, processor, fetcher, icons[0].attributes.mimeType || 'image/png', PngFaviconFileSize);
-        return { messages, icon }
+        const icon = await checkIcon(
+          iconUrl,
+          processor,
+          fetcher,
+          icons[0].attributes.mimeType || 'image/png',
+          PngFaviconFileSize,
+        );
+        return { messages, icon };
       }
     }
   }
 
   return { messages, icon: { content: null, url: null, width: null, height: null } };
-}
+};
 
-export const checkDesktopFavicon = async (baseUrl: string, head: HTMLElement | null, fetcher: Fetcher = fetchFetcher): Promise<DesktopFaviconReport> => {
+export const checkDesktopFavicon = async (
+  baseUrl: string,
+  head: HTMLElement | null,
+  fetcher: Fetcher = fetchFetcher,
+): Promise<DesktopFaviconReport> => {
   const svgReport = await checkSvgFavicon(baseUrl, head, fetcher);
   const pngReport = await checkPngFavicon(baseUrl, head, fetcher);
   const icoReport = await checkIcoFavicon(baseUrl, head, fetcher);
 
   return {
-    messages: [ ...svgReport.messages, ...pngReport.messages, ...icoReport.messages ],
+    messages: [...svgReport.messages, ...pngReport.messages, ...icoReport.messages],
     icon: pngReport.icon?.content ?? icoReport.icon?.content ?? svgReport.icon?.content ?? null,
     icons: {
       png: pngReport.icon,
       ico: icoReport.icon,
-      svg: svgReport.icon
-    }
+      svg: svgReport.icon,
+    },
   };
-}
+};

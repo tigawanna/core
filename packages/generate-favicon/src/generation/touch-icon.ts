@@ -1,20 +1,23 @@
-import { FaviconAssetPathTransformer, FaviconFiles, FaviconMarkups, identityFaviconAssetPathTransformer } from ".";
-import { MasterIcon, transformSvg } from "../icon/helper";
-import { TouchIconSettings } from "../icon/ios";
-import { scaleSvg } from "../svg";
-import { ImageAdapter } from "../svg/adapter";
-import { addRfgMetadataToPng } from "../metadata";
+import { FaviconAssetPathTransformer, FaviconFiles, FaviconMarkups, identityFaviconAssetPathTransformer } from '.';
+import { MasterIcon, transformSvg } from '../icon/helper';
+import { TouchIconSettings } from '../icon/ios';
+import { scaleSvg } from '../svg';
+import { ImageAdapter } from '../svg/adapter';
+import { addRfgMetadataToPng } from '../metadata';
 
 export const TouchIconFileName = 'apple-touch-icon.png';
 export const TouchIconPngSize = 180;
 
-export const generateTouchIconHtml = (faviconPath: string, appTitle: string | null, transformer: FaviconAssetPathTransformer = identityFaviconAssetPathTransformer, version?: string): FaviconMarkups => {
+export const generateTouchIconHtml = (
+  faviconPath: string,
+  appTitle: string | null,
+  transformer: FaviconAssetPathTransformer = identityFaviconAssetPathTransformer,
+  version?: string,
+): FaviconMarkups => {
   const markups = [
     `<link rel="apple-touch-icon" sizes="180x180" href="${transformer(`${faviconPath}${TouchIconFileName}`, true, false, version)}" />`,
   ];
-  const cssSelectors = [
-    `link[rel="apple-touch-icon"]`
-  ];
+  const cssSelectors = [`link[rel="apple-touch-icon"]`];
 
   if (appTitle) {
     markups.push(`<meta name="apple-mobile-web-app-title" content="${appTitle}" />`);
@@ -22,18 +25,24 @@ export const generateTouchIconHtml = (faviconPath: string, appTitle: string | nu
   }
 
   return { markups, cssSelectors };
-}
+};
 
-export const generateTouchIconFiles = async (masterIcon: MasterIcon, settings: TouchIconSettings, imageAdapeter: ImageAdapter, skipMetadata = false): Promise<FaviconFiles> => {
+export const generateTouchIconFiles = async (
+  masterIcon: MasterIcon,
+  settings: TouchIconSettings,
+  imageAdapeter: ImageAdapter,
+  skipMetadata = false,
+): Promise<FaviconFiles> => {
   const transformedIcon = transformSvg(
-    settings.icon ?? masterIcon.icon, settings.transformation, imageAdapeter, TouchIconPngSize
+    settings.icon ?? masterIcon.icon,
+    settings.transformation,
+    imageAdapeter,
+    TouchIconPngSize,
   );
 
-  const touchIcon = await imageAdapeter.convertSvgToPng(
-    scaleSvg(transformedIcon, TouchIconPngSize, imageAdapeter)
-  );
+  const touchIcon = await imageAdapeter.convertSvgToPng(scaleSvg(transformedIcon, TouchIconPngSize, imageAdapeter));
 
   return {
-    [TouchIconFileName]: skipMetadata ? touchIcon : addRfgMetadataToPng(touchIcon)
+    [TouchIconFileName]: skipMetadata ? touchIcon : addRfgMetadataToPng(touchIcon),
   };
-}
+};

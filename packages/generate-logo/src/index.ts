@@ -1,8 +1,3 @@
+export { ContentType, BackgroundType, LogoSettings } from './types';
 
-export {
-  ContentType, BackgroundType, LogoSettings
-} from './types';
-
-export {
-  generateLogo
-} from './logo';
+export { generateLogo } from './logo';

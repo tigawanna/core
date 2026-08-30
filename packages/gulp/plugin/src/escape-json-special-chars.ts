@@ -1,2 +1,1 @@
-
-export const escapeJSONSpecialChars = (json: string) => {}
+export const escapeJSONSpecialChars = (json: string) => {};

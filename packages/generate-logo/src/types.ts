@@ -1,4 +1,3 @@
-
 export enum ContentType {
   Text = 'text',
 }
@@ -6,7 +5,7 @@ export enum ContentType {
 export enum BackgroundType {
   Color = 'color',
   None = 'none',
-  Gradient = 'gradient'
+  Gradient = 'gradient',
 }
 
 export type LogoSettings = {
@@ -26,6 +25,6 @@ export type LogoSettings = {
       startColor: string;
       stopColor: string;
       angle: number;
-    }
-  }
-}
+    };
+  };
+};

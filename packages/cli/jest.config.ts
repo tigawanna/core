@@ -1,14 +1,14 @@
-import { pathsToModuleNameMapper, JestConfigWithTsJest } from "ts-jest"
-import type { Config } from 'jest'
-import path from "path";
+import { pathsToModuleNameMapper, JestConfigWithTsJest } from 'ts-jest';
+import type { Config } from 'jest';
+import path from 'path';
 
 const config = {
   preset: 'ts-jest',
   testEnvironment: 'node',
   testMatch: ['**/*.test.ts'],
   moduleNameMapper: pathsToModuleNameMapper({
-    "@/*": ["./*.ts"]
+    '@/*': ['./*.ts'],
   }),
 };
 
-export default config
+export default config;

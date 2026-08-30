@@ -16,8 +16,8 @@ npm install @realfavicongenerator/check-favicon node-html-parser
 Usage:
 
 ```js
-import { parse } from 'node-html-parser'
-import { checkDesktopFavicon, checkTouchIcon, checkWebAppManifest } from '@realfavicongenerator/check-favicon'
+import { parse } from 'node-html-parser';
+import { checkDesktopFavicon, checkTouchIcon, checkWebAppManifest } from '@realfavicongenerator/check-favicon';
 
 const body = fs.readFileSync('some_page.html');
 
@@ -28,5 +28,5 @@ const desktopFaviconReport = await checkDesktopFavicon(pageUrl, head);
 const touchIconFaviconReport = await checkTouchIcon(pageUrl, head);
 const webAppManifestFaviconReport = await checkWebAppManifest(pageUrl, head);
 
-console.log("Analysis and icons", desktopFaviconReport, touchIconFaviconReport, webAppManifestFaviconReport);
+console.log('Analysis and icons', desktopFaviconReport, touchIconFaviconReport, webAppManifestFaviconReport);
 ```

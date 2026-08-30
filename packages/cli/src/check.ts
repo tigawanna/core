@@ -1,11 +1,18 @@
-import { CheckerMessage, CheckerStatus, FaviconReport, checkFavicon, reportHasErrors, reportHasWarnings } from "@realfavicongenerator/check-favicon";
-import { parse } from 'node-html-parser'
-import { getUrl } from '@/helper'
-import open from 'open'
-import { RealFaviconGeneratorBaseUrl } from "./common.js";
+import {
+  CheckerMessage,
+  CheckerStatus,
+  FaviconReport,
+  checkFavicon,
+  reportHasErrors,
+  reportHasWarnings,
+} from '@realfavicongenerator/check-favicon';
+import { parse } from 'node-html-parser';
+import { getUrl } from '@/helper';
+import open from 'open';
+import { RealFaviconGeneratorBaseUrl } from './common.js';
 
 const statusToIcon = (status: CheckerStatus): string => {
-  switch(status) {
+  switch (status) {
     case CheckerStatus.Error:
       return '❌';
     case CheckerStatus.Warning:
@@ -15,41 +22,44 @@ const statusToIcon = (status: CheckerStatus): string => {
   }
 
   return '❓';
-}
+};
 
 const printMessages = (report: CheckerMessage[], indentation = 2) => {
   const indent = ' '.repeat(indentation);
 
-  report.forEach((message) => {
+  report.forEach(message => {
     console.log(`${indent}${statusToIcon(message.status)} ${message.text}`);
   });
+};
+
+enum Screen {
+  Cli,
+  RealFavicon,
 }
 
-enum Screen { Cli, RealFavicon }
-
 export const stringToScreen = (screen: string): Screen => {
-  switch(screen) {
+  switch (screen) {
     case 'cli':
       return Screen.Cli;
     default:
     case 'realfavicon':
       return Screen.RealFavicon;
   }
-}
+};
 
 const printCliReport = (report: FaviconReport) => {
   console.log();
-  console.log("Desktop");
+  console.log('Desktop');
   printMessages(report.desktop.messages);
 
   console.log();
-  console.log("Touch");
+  console.log('Touch');
   printMessages(report.touchIcon.messages);
 
   console.log();
-  console.log("Web Manifest");
+  console.log('Web Manifest');
   printMessages(report.webAppManifest.messages);
-}
+};
 
 export const check = async (urlOrPort: string, screen: Screen, warningAsErrors = false): Promise<number> => {
   const url = getUrl(urlOrPort);
@@ -63,12 +73,15 @@ export const check = async (urlOrPort: string, screen: Screen, warningAsErrors =
   const report = await checkFavicon(url, head);
   console.log('Check completed');
 
-  switch(screen) {
+  switch (screen) {
     case Screen.Cli:
       printCliReport(report);
       break;
     case Screen.RealFavicon:
-      const result = await fetch(`${RealFaviconGeneratorBaseUrl}api/check/report`, { method: 'POST', body: JSON.stringify(report)});
+      const result = await fetch(`${RealFaviconGeneratorBaseUrl}api/check/report`, {
+        method: 'POST',
+        body: JSON.stringify(report),
+      });
       const json = await result.json();
       const reportUrl = `${RealFaviconGeneratorBaseUrl}checker/${json.id}`;
       console.log(`Open report at ${reportUrl}`);
@@ -83,4 +96,4 @@ export const check = async (urlOrPort: string, screen: Screen, warningAsErrors =
   }
 
   return 0;
-}
+};

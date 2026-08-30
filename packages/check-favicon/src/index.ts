@@ -1,4 +1,3 @@
-
 export {
   CheckerStatus,
   MessageId,
@@ -8,11 +7,11 @@ export {
   TouchIconIconReport,
   WebAppManifestReport,
   FaviconReport,
-  TouchIconReport
+  TouchIconReport,
 } from './types';
 
-export { checkDesktopFavicon, checkSvgFavicon } from "./desktop/desktop"
-export { checkTouchIcon } from "./touch-icon"
-export { checkWebAppManifest } from "./web-app-manifest"
-export { checkFavicon } from "./check"
-export { reportHasErrors, reportHasWarnings } from "./helper"
+export { checkDesktopFavicon, checkSvgFavicon } from './desktop/desktop';
+export { checkTouchIcon } from './touch-icon';
+export { checkWebAppManifest } from './web-app-manifest';
+export { checkFavicon } from './check';
+export { reportHasErrors, reportHasWarnings } from './helper';

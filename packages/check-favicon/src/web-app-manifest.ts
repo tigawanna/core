@@ -1,8 +1,19 @@
-import { HTMLElement } from "node-html-parser";
-import { CheckerMessage, CheckerStatus, Fetcher, MessageId, WebAppManifestReport } from "./types";
-import { CheckIconOutput, CheckIconProcessor, checkIcon, fetchFetcher, mergeUrlAndPath, pathToMimeType } from "./helper";
+import { HTMLElement } from 'node-html-parser';
+import { CheckerMessage, CheckerStatus, Fetcher, MessageId, WebAppManifestReport } from './types';
+import {
+  CheckIconOutput,
+  CheckIconProcessor,
+  checkIcon,
+  fetchFetcher,
+  mergeUrlAndPath,
+  pathToMimeType,
+} from './helper';
 
-export const checkWebAppManifest = async (baseUrl: string, head: HTMLElement | null, fetcher: Fetcher = fetchFetcher): Promise<WebAppManifestReport> => {
+export const checkWebAppManifest = async (
+  baseUrl: string,
+  head: HTMLElement | null,
+  fetcher: Fetcher = fetchFetcher,
+): Promise<WebAppManifestReport> => {
   const messages: CheckerMessage[] = [];
   let name = undefined;
   let shortName = undefined;
@@ -14,7 +25,7 @@ export const checkWebAppManifest = async (baseUrl: string, head: HTMLElement | n
     messages.push({
       status: CheckerStatus.Error,
       id: MessageId.noHead,
-      text: 'No <head> element'
+      text: 'No <head> element',
     });
 
     return { messages, name, shortName, backgroundColor, themeColor, icon };
@@ -25,7 +36,7 @@ export const checkWebAppManifest = async (baseUrl: string, head: HTMLElement | n
     messages.push({
       status: CheckerStatus.Error,
       id: MessageId.noManifest,
-      text: 'No web app manifest'
+      text: 'No web app manifest',
     });
 
     return { messages, name, shortName, backgroundColor, themeColor, icon };
@@ -36,7 +47,7 @@ export const checkWebAppManifest = async (baseUrl: string, head: HTMLElement | n
     messages.push({
       status: CheckerStatus.Error,
       id: MessageId.noManifestHref,
-      text: 'The web app manifest markup has no `href` attribute'
+      text: 'The web app manifest markup has no `href` attribute',
     });
 
     return { messages, name, shortName, backgroundColor, themeColor, icon };
@@ -50,7 +61,7 @@ export const checkWebAppManifest = async (baseUrl: string, head: HTMLElement | n
     messages.push({
       status: CheckerStatus.Error,
       id: MessageId.manifest404,
-      text: `The web app manifest at \`${href}\` is not found`
+      text: `The web app manifest at \`${href}\` is not found`,
     });
 
     return { messages, name, shortName, backgroundColor, themeColor, icon };
@@ -58,7 +69,7 @@ export const checkWebAppManifest = async (baseUrl: string, head: HTMLElement | n
     messages.push({
       status: CheckerStatus.Error,
       id: MessageId.manifestCannotGet,
-      text: `Cannot get the web app manifest at \`${href}\` (${manifest.status} error)`
+      text: `Cannot get the web app manifest at \`${href}\` (${manifest.status} error)`,
     });
 
     return { messages, name, shortName, backgroundColor, themeColor, icon };
@@ -67,11 +78,11 @@ export const checkWebAppManifest = async (baseUrl: string, head: HTMLElement | n
   let parsedManifest;
   try {
     parsedManifest = await readableStreamToJson(manifest.readableStream);
-  } catch(e) {
+  } catch (e) {
     messages.push({
       status: CheckerStatus.Error,
       id: MessageId.manifestInvalidJson,
-      text: `Cannot parse the web app manifest at \`${href}\``
+      text: `Cannot parse the web app manifest at \`${href}\``,
     });
 
     return { messages, name, shortName, backgroundColor, themeColor, icon };
@@ -82,8 +93,8 @@ export const checkWebAppManifest = async (baseUrl: string, head: HTMLElement | n
   return {
     ...manifestReport,
     messages: messages.concat(manifestReport.messages),
-  }
-}
+  };
+};
 
 const readableStreamToJson = async (stream: ReadableStream): Promise<any> => {
   const reader = stream.getReader();
@@ -97,9 +108,13 @@ const readableStreamToJson = async (stream: ReadableStream): Promise<any> => {
     result += decoder.decode(value);
   }
   return JSON.parse(result);
-}
+};
 
-export const checkWebAppManifestFile = async (manifest: any, baseUrl: string, fetcher: Fetcher): Promise<WebAppManifestReport> => {
+export const checkWebAppManifestFile = async (
+  manifest: any,
+  baseUrl: string,
+  fetcher: Fetcher,
+): Promise<WebAppManifestReport> => {
   const messages: CheckerMessage[] = [];
   let icon: CheckIconOutput | null = null;
 
@@ -108,13 +123,13 @@ export const checkWebAppManifestFile = async (manifest: any, baseUrl: string, fe
     messages.push({
       status: CheckerStatus.Error,
       id: MessageId.noManifestName,
-      text: 'The web app manifest has no `name`'
+      text: 'The web app manifest has no `name`',
     });
   } else {
     messages.push({
       status: CheckerStatus.Ok,
       id: MessageId.manifestName,
-      text: `The web app manifest has the name "${name}"`
+      text: `The web app manifest has the name "${name}"`,
     });
   }
 
@@ -123,13 +138,13 @@ export const checkWebAppManifestFile = async (manifest: any, baseUrl: string, fe
     messages.push({
       status: CheckerStatus.Error,
       id: MessageId.noManifestShortName,
-      text: 'The web app manifest has no `short_name`'
+      text: 'The web app manifest has no `short_name`',
     });
   } else {
     messages.push({
       status: CheckerStatus.Ok,
       id: MessageId.manifestShortName,
-      text: `The web app manifest has the short name "${shortName}"`
+      text: `The web app manifest has the short name "${shortName}"`,
     });
   }
 
@@ -138,13 +153,13 @@ export const checkWebAppManifestFile = async (manifest: any, baseUrl: string, fe
     messages.push({
       status: CheckerStatus.Error,
       id: MessageId.noManifestBackgroundColor,
-      text: 'The web app manifest has no `background_color`'
+      text: 'The web app manifest has no `background_color`',
     });
   } else {
     messages.push({
       status: CheckerStatus.Ok,
       id: MessageId.manifestBackgroundColor,
-      text: `The web app manifest has the background color \`${backgroundColor}\``
+      text: `The web app manifest has the background color \`${backgroundColor}\``,
     });
   }
 
@@ -153,13 +168,13 @@ export const checkWebAppManifestFile = async (manifest: any, baseUrl: string, fe
     messages.push({
       status: CheckerStatus.Error,
       id: MessageId.noManifestThemeColor,
-      text: 'The web app manifest has no `theme_color`'
+      text: 'The web app manifest has no `theme_color`',
     });
   } else {
     messages.push({
       status: CheckerStatus.Ok,
       id: MessageId.manifestThemeColor,
-      text: `The web app manifest has the theme color \`${themeColor}\``
+      text: `The web app manifest has the theme color \`${themeColor}\``,
     });
   }
 
@@ -169,93 +184,87 @@ export const checkWebAppManifestFile = async (manifest: any, baseUrl: string, fe
     messages.push({
       status: CheckerStatus.Error,
       id: MessageId.noManifestIcons,
-      text: 'The web app manifest has no `icons`'
+      text: 'The web app manifest has no `icons`',
     });
 
     return { messages, name, shortName, backgroundColor, themeColor, icon };
   }
 
-  for await (const size of [ 192, 512 ]) {
+  for await (const size of [192, 512]) {
     const iconEntry = icons.find((icon: any) => icon.sizes === `${size}x${size}`);
     if (!iconEntry) {
       messages.push({
         status: CheckerStatus.Error,
         id: MessageId.noManifestIcon,
-        text: `The web app manifest has no ${size}x${size} icon`
+        text: `The web app manifest has no ${size}x${size} icon`,
       });
     } else {
       messages.push({
         status: CheckerStatus.Ok,
         id: MessageId.manifestIconDeclared,
-        text: `The web app manifest has a ${size}x${size} icon`
+        text: `The web app manifest has a ${size}x${size} icon`,
       });
 
       const iconUrl = mergeUrlAndPath(baseUrl, iconEntry.src);
 
       const processor: CheckIconProcessor = {
-        cannotGet: (status) => {
+        cannotGet: status => {
           messages.push({
             status: CheckerStatus.Error,
             id: MessageId.manifestIconCannotGet,
-            text: `The ${size}x${size} icon cannot be fetched (${status})`
+            text: `The ${size}x${size} icon cannot be fetched (${status})`,
           });
         },
         downloadable: () => {
           messages.push({
             status: CheckerStatus.Ok,
             id: MessageId.manifestIconDownloadable,
-            text: `The ${size}x${size} icon is downloadable`
+            text: `The ${size}x${size} icon is downloadable`,
           });
         },
         icon404: () => {
           messages.push({
             status: CheckerStatus.Error,
             id: MessageId.manifestIcon404,
-            text: `The ${size}x${size} icon is not found`
+            text: `The ${size}x${size} icon is not found`,
           });
         },
         noHref: () => {
           messages.push({
             status: CheckerStatus.Error,
             id: MessageId.manifestIconNoHref,
-            text: `The ${size}x${size} icon has no \`href\` attribute`
+            text: `The ${size}x${size} icon has no \`href\` attribute`,
           });
         },
         notSquare: () => {
           messages.push({
             status: CheckerStatus.Error,
             id: MessageId.manifestIconNotSquare,
-            text: `The ${size}x${size} icon is not square`
+            text: `The ${size}x${size} icon is not square`,
           });
         },
         rightSize: () => {
           messages.push({
             status: CheckerStatus.Ok,
             id: MessageId.manifestIconRightSize,
-            text: `The ${size}x${size} icon has the right size`
+            text: `The ${size}x${size} icon has the right size`,
           });
         },
         square: () => {
           // Ignore this, just check the size
         },
-        wrongSize: (actualSize) => {
+        wrongSize: actualSize => {
           messages.push({
             status: CheckerStatus.Error,
             id: MessageId.manifestIconWrongSize,
-            text: `The ${size}x${size} icon has the wrong size (${actualSize})`
+            text: `The ${size}x${size} icon has the wrong size (${actualSize})`,
           });
-        }
+        },
       };
 
-      icon = await checkIcon(
-        iconUrl,
-        processor,
-        fetcher,
-        iconEntry.type || pathToMimeType(iconEntry.src),
-        size
-      );
+      icon = await checkIcon(iconUrl, processor, fetcher, iconEntry.type || pathToMimeType(iconEntry.src), size);
     }
   }
 
   return { messages, name, shortName, backgroundColor, themeColor, icon };
-}
+};

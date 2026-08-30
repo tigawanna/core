@@ -1,5 +1,5 @@
-import fs from 'fs/promises'
-import { Svg } from "@svgdotjs/svg.js";
+import fs from 'fs/promises';
+import { Svg } from '@svgdotjs/svg.js';
 import { dataUrlToSvg, stringToSvg } from '@realfavicongenerator/generate-favicon';
 import { getNodeImageAdapter } from './adapter';
 

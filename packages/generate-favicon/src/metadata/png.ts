@@ -7,7 +7,7 @@ const CRC32_TABLE: number[] = (() => {
   for (let n = 0; n < 256; n++) {
     let c = n;
     for (let k = 0; k < 8; k++) {
-      c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+      c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
     }
     table[n] = c;
   }
@@ -15,30 +15,30 @@ const CRC32_TABLE: number[] = (() => {
 })();
 
 const crc32 = (bytes: number[]): number => {
-  let crc = 0xFFFFFFFF;
+  let crc = 0xffffffff;
   for (const byte of bytes) {
-    crc = CRC32_TABLE[(crc ^ byte) & 0xFF] ^ (crc >>> 8);
+    crc = CRC32_TABLE[(crc ^ byte) & 0xff] ^ (crc >>> 8);
   }
-  return (crc ^ 0xFFFFFFFF) >>> 0;
+  return (crc ^ 0xffffffff) >>> 0;
 };
 
 const writeUInt32BE = (buf: Buffer, value: number, offset: number): void => {
-  buf[offset]     = (value >>> 24) & 0xFF;
-  buf[offset + 1] = (value >>> 16) & 0xFF;
-  buf[offset + 2] = (value >>>  8) & 0xFF;
-  buf[offset + 3] =  value         & 0xFF;
+  buf[offset] = (value >>> 24) & 0xff;
+  buf[offset + 1] = (value >>> 16) & 0xff;
+  buf[offset + 2] = (value >>> 8) & 0xff;
+  buf[offset + 3] = value & 0xff;
 };
 
 const makeTextChunk = (keyword: string, text: string): Buffer => {
-  const typeBytes  = [0x74, 0x45, 0x58, 0x74]; // 'tEXt'
-  const kwBytes    = [...Buffer.from(keyword, 'latin1')];
-  const textBytes  = [...Buffer.from(text, 'latin1')];
-  const data       = [...kwBytes, 0x00, ...textBytes];
-  const crcValue   = crc32([...typeBytes, ...data]);
+  const typeBytes = [0x74, 0x45, 0x58, 0x74]; // 'tEXt'
+  const kwBytes = [...Buffer.from(keyword, 'latin1')];
+  const textBytes = [...Buffer.from(text, 'latin1')];
+  const data = [...kwBytes, 0x00, ...textBytes];
+  const crcValue = crc32([...typeBytes, ...data]);
 
   const chunk = Buffer.alloc(4 + 4 + data.length + 4);
   writeUInt32BE(chunk, data.length, 0);
-  for (let i = 0; i < 4; i++)         chunk[4 + i] = typeBytes[i];
+  for (let i = 0; i < 4; i++) chunk[4 + i] = typeBytes[i];
   for (let i = 0; i < data.length; i++) chunk[8 + i] = data[i];
   writeUInt32BE(chunk, crcValue, 8 + data.length);
   return chunk;

@@ -1,7 +1,15 @@
-import fs from "fs/promises"
-import { FaviconSettings, MasterIcon, bitmapToSvg, dataUrlToSvg, generateFaviconFiles, generateFaviconHtml, stringToSvg } from '@realfavicongenerator/generate-favicon';
-import { getNodeImageAdapter, loadAndConvertToSvg } from "@realfavicongenerator/image-adapter-node";
-import { Svg } from "@svgdotjs/svg.js";
+import fs from 'fs/promises';
+import {
+  FaviconSettings,
+  MasterIcon,
+  bitmapToSvg,
+  dataUrlToSvg,
+  generateFaviconFiles,
+  generateFaviconHtml,
+  stringToSvg,
+} from '@realfavicongenerator/generate-favicon';
+import { getNodeImageAdapter, loadAndConvertToSvg } from '@realfavicongenerator/image-adapter-node';
+import { Svg } from '@svgdotjs/svg.js';
 
 const toBuffer = async (data: string | Buffer | Blob): Promise<Uint8Array> => {
   if (data instanceof Blob) {
@@ -11,7 +19,7 @@ const toBuffer = async (data: string | Buffer | Blob): Promise<Uint8Array> => {
     return Uint8Array.from(data);
   }
   return Uint8Array.from(Buffer.from(data, 'utf8'));
-}
+};
 
 export const generate = async (imagePath: string, settingsPath: string, outputData: string, assetsDir: string) => {
   const imageAdapter = await getNodeImageAdapter();
@@ -19,7 +27,7 @@ export const generate = async (imagePath: string, settingsPath: string, outputDa
   // Open master image
   const masterIcon: MasterIcon = {
     icon: await loadAndConvertToSvg(imagePath),
-  }
+  };
 
   // Open settings
   const faviconSettingsFile = await fs.readFile(settingsPath, 'utf8');
@@ -39,4 +47,4 @@ export const generate = async (imagePath: string, settingsPath: string, outputDa
   // Generate HTML
   const html = await generateFaviconHtml(faviconSettings);
   await fs.writeFile(outputData, JSON.stringify(html, null, 2));
-}
+};

@@ -1,5 +1,5 @@
-import { load } from "cheerio";
-import pretty from "pretty";
+import { load } from 'cheerio';
+import pretty from 'pretty';
 
 export const DefaultRemovedMarkupCssSelectors = [
   'link[rel="mask-icon"]',
@@ -12,21 +12,21 @@ export const DefaultRemovedMarkupCssSelectors = [
 export const injectMarkupInHtmlHead = (
   htmlCode: string,
   markupsToAdd: string[],
-  cssSelectorsOfMarkupsToRemove: string[]
+  cssSelectorsOfMarkupsToRemove: string[],
 ): string => {
   // Inject the markups with cheerio
 
   const $ = load(htmlCode);
 
   // Remove the specified markups
-  cssSelectorsOfMarkupsToRemove.forEach((selector) => {
+  cssSelectorsOfMarkupsToRemove.forEach(selector => {
     $(selector).remove();
   });
 
   // Add the new markups
-  markupsToAdd.forEach((markup) => {
+  markupsToAdd.forEach(markup => {
     $('head').append(markup);
   });
 
   return pretty($.html());
-}
+};

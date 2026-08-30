@@ -66,9 +66,7 @@ describe('NodeImageAdapter', () => {
       // Read the reference image and convert to raw data
       const referencePath = path.join(__dirname, '../fixtures/test-image-small-square.png');
       const referenceBuffer = fs.readFileSync(referencePath);
-      const referenceRawData = await sharp(referenceBuffer)
-        .raw()
-        .toBuffer();
+      const referenceRawData = await sharp(referenceBuffer).raw().toBuffer();
 
       // Compare the raw data
       expect(Buffer.isBuffer(rawData)).toBe(true);

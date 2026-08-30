@@ -1,4 +1,4 @@
-import fs from 'fs/promises'
+import fs from 'fs/promises';
 import path from 'path';
 import { CheckerStatus, FaviconReport, Fetcher } from './types';
 import sharp, { FormatEnum } from 'sharp';
@@ -9,19 +9,17 @@ export const filePathToReadableStream = async (path: string): Promise<ReadableSt
 
   return new ReadableStream({
     start(controller) {
-      stream.on('data', (chunk) => {
+      stream.on('data', chunk => {
         controller.enqueue(chunk);
       });
       stream.on('close', () => {
         controller.close();
       });
-    }
+    },
   });
-}
+};
 
-export const filePathToString = async (path: string): Promise<string> => (
-  fs.readFile(path, 'utf-8')
-)
+export const filePathToString = async (path: string): Promise<string> => fs.readFile(path, 'utf-8');
 
 export const stringToReadableStream = (str: string): ReadableStream => {
   const encoder = new TextEncoder();
@@ -31,9 +29,9 @@ export const stringToReadableStream = (str: string): ReadableStream => {
     start(controller) {
       controller.enqueue(uint8Array);
       controller.close();
-    }
+    },
   });
-}
+};
 
 export const readableStreamToString = async (readableStream: ReadableStream): Promise<string> => {
   const reader = readableStream.getReader();
@@ -52,8 +50,8 @@ export const readableStreamToString = async (readableStream: ReadableStream): Pr
     concatenatedChunks.set(chunk, offset);
     offset += chunk.length;
   }
-  return new TextDecoder("utf-8").decode(concatenatedChunks);
-}
+  return new TextDecoder('utf-8').decode(concatenatedChunks);
+};
 
 export const readableStreamToBuffer = async (readableStream: ReadableStream): Promise<Buffer> => {
   const reader = readableStream.getReader();
@@ -73,18 +71,18 @@ export const readableStreamToBuffer = async (readableStream: ReadableStream): Pr
     offset += chunk.length;
   }
   return Buffer.from(concatenatedChunks);
-}
+};
 
 export type CheckIconProcessor = {
-  noHref: () => void,
-  icon404: () => void,
-  cannotGet: (httpStatusCode: number) => void,
-  downloadable: () => void,
-  square: (widthHeight: number) => void,
-  notSquare: (width: number, Height: number) => void,
-  rightSize: (widthHeight: number) => void,
-  wrongSize: (widthHeight: number) => void
-}
+  noHref: () => void;
+  icon404: () => void;
+  cannotGet: (httpStatusCode: number) => void;
+  downloadable: () => void;
+  square: (widthHeight: number) => void;
+  notSquare: (width: number, Height: number) => void;
+  rightSize: (widthHeight: number) => void;
+  wrongSize: (widthHeight: number) => void;
+};
 
 export const pathToMimeType = (path: string): string => {
   const ext = path.split('.').pop();
@@ -101,21 +99,21 @@ export const pathToMimeType = (path: string): string => {
     default:
       return 'application/octet-stream';
   }
-}
+};
 
 export type CheckIconOutput = {
-  content: string | null,
-  url: string | null,
-  width: number | null,
-  height: number | null,
-}
+  content: string | null;
+  url: string | null;
+  width: number | null;
+  height: number | null;
+};
 
 export const checkIcon = async (
   iconUrl: string | undefined,
   processor: CheckIconProcessor,
   fetcher: Fetcher,
   mimeType: string | undefined,
-  expectedWidthHeight?: number
+  expectedWidthHeight?: number,
 ): Promise<CheckIconOutput | null> => {
   if (!iconUrl) {
     processor.noHref();
@@ -157,17 +155,17 @@ export const checkIcon = async (
       content,
       url: iconUrl,
       width: meta.width || null,
-      height: meta.height || null
-    }
+      height: meta.height || null,
+    };
   }
 
   return {
     content: null,
     url: iconUrl,
     width: null,
-    height: null
+    height: null,
   };
-}
+};
 
 export const mergeUrlAndPath = (baseUrl: string, absoluteOrRelativePath: string): string => {
   // If the path is a full URL, return it as is
@@ -187,7 +185,7 @@ export const mergeUrlAndPath = (baseUrl: string, absoluteOrRelativePath: string)
     // Otherwise, append the path to the existing pathname
     return `${url.href}${url.href.endsWith('/') ? '' : '/'}${absoluteOrRelativePath}`;
   }
-}
+};
 
 export const parseSizesAttribute = (sizes: string | undefined | null): number | null => {
   if (!sizes) {
@@ -204,42 +202,46 @@ export const parseSizesAttribute = (sizes: string | undefined | null): number | 
   }
 
   return null;
-}
+};
 
 export const bufferToDataUrl = (buffer: Buffer, mimeType: string): string => {
   return `data:${mimeType};base64,${buffer.toString('base64')}`;
-}
+};
 
 export const filePathToDataUrl = async (filePath: string): Promise<string> => {
   const readStream = await filePathToReadableStream(filePath);
   const rawContent = await readableStreamToBuffer(readStream);
   const contentType = pathToMimeType(filePath);
   return bufferToDataUrl(rawContent, contentType);
-}
+};
 
 export const fetchFetcher: Fetcher = async (url, contentType) => {
   const res = await fetch(url, {
     headers: {
       'Content-Type': contentType || pathToMimeType(url),
-      'user-agent': 'RealFaviconGenerator Favicon Checker'
-    }
+      'user-agent': 'RealFaviconGenerator Favicon Checker',
+    },
   });
 
   return {
     status: res.status,
     contentType: res.headers.get('Content-Type') || null,
-    readableStream: res.body
-  }
-}
+    readableStream: res.body,
+  };
+};
 
 export const reportHasErrors = (report: FaviconReport): boolean => {
-  return report.desktop.messages.some(message => message.status === CheckerStatus.Error) ||
+  return (
+    report.desktop.messages.some(message => message.status === CheckerStatus.Error) ||
     report.touchIcon.messages.some(message => message.status === CheckerStatus.Error) ||
-    report.webAppManifest.messages.some(message => message.status === CheckerStatus.Error);
-}
+    report.webAppManifest.messages.some(message => message.status === CheckerStatus.Error)
+  );
+};
 
 export const reportHasWarnings = (report: FaviconReport): boolean => {
-  return report.desktop.messages.some(message => message.status === CheckerStatus.Warning) ||
+  return (
+    report.desktop.messages.some(message => message.status === CheckerStatus.Warning) ||
     report.touchIcon.messages.some(message => message.status === CheckerStatus.Warning) ||
-    report.webAppManifest.messages.some(message => message.status === CheckerStatus.Warning);
-}
+    report.webAppManifest.messages.some(message => message.status === CheckerStatus.Warning)
+  );
+};

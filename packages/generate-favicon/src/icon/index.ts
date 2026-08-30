@@ -1,39 +1,46 @@
-import { Svg } from "@svgdotjs/svg.js";
-import { DesktopIconSettings, initDesktopIconSettings } from "./desktop";
-import { TouchIconSettings, initTouchIconSettings } from "./ios";
-import { WebAppManifestSettings, initWebAppManifestSettings } from "./web-app-manifest";
-import { IconTransformation, MasterIcon } from "./helper";
-import { generateDesktopFaviconFiles, generateDesktopFaviconHtml } from "../generation/desktop";
-import { generateTouchIconFiles, generateTouchIconHtml } from "../generation/touch-icon";
-import { generateWebAppManifestHtml, generateWebAppManifestIconFiles } from "../generation/web-app-manifest";
-import { ImageAdapter } from "../svg/adapter";
-import { FaviconAssetFileNameTransformer, FaviconAssetPathTransformer, FaviconFiles, FaviconMarkups, identityFaviconAssetFileNameTransformer, identityFaviconAssetPathTransformer } from "../generation";
+import { Svg } from '@svgdotjs/svg.js';
+import { DesktopIconSettings, initDesktopIconSettings } from './desktop';
+import { TouchIconSettings, initTouchIconSettings } from './ios';
+import { WebAppManifestSettings, initWebAppManifestSettings } from './web-app-manifest';
+import { IconTransformation, MasterIcon } from './helper';
+import { generateDesktopFaviconFiles, generateDesktopFaviconHtml } from '../generation/desktop';
+import { generateTouchIconFiles, generateTouchIconHtml } from '../generation/touch-icon';
+import { generateWebAppManifestHtml, generateWebAppManifestIconFiles } from '../generation/web-app-manifest';
+import { ImageAdapter } from '../svg/adapter';
+import {
+  FaviconAssetFileNameTransformer,
+  FaviconAssetPathTransformer,
+  FaviconFiles,
+  FaviconMarkups,
+  identityFaviconAssetFileNameTransformer,
+  identityFaviconAssetPathTransformer,
+} from '../generation';
 
 export type FaviconIconSettings = {
-  desktop: DesktopIconSettings,
-  touch: TouchIconSettings,
-  webAppManifest: WebAppManifestSettings,
-}
+  desktop: DesktopIconSettings;
+  touch: TouchIconSettings;
+  webAppManifest: WebAppManifestSettings;
+};
 
 export type FaviconSettings = {
-  icon: FaviconIconSettings,
-  path: string,
-  skipMetadataInjection?: boolean,
-  version?: string,
-}
+  icon: FaviconIconSettings;
+  path: string;
+  skipMetadataInjection?: boolean;
+  version?: string;
+};
 
 export type EditedIcon = {
-  icon?: Svg,
-  transformation: IconTransformation
-}
+  icon?: Svg;
+  transformation: IconTransformation;
+};
 
 export const initFaviconIconSettings = (): FaviconIconSettings => {
   return {
     desktop: initDesktopIconSettings(),
     touch: initTouchIconSettings(),
-    webAppManifest: initWebAppManifestSettings()
+    webAppManifest: initWebAppManifestSettings(),
   };
-}
+};
 
 export const generateFaviconFiles = async (
   masterIcon: MasterIcon,
@@ -41,21 +48,11 @@ export const generateFaviconFiles = async (
   imageAdapter: ImageAdapter,
   pathTransformer: FaviconAssetPathTransformer = identityFaviconAssetPathTransformer,
   fileNameTransformer: FaviconAssetFileNameTransformer = identityFaviconAssetFileNameTransformer,
-): Promise<FaviconFiles> => (
+): Promise<FaviconFiles> =>
   Object.assign(
     {},
-    await generateDesktopFaviconFiles(
-      masterIcon,
-      settings.icon.desktop,
-      imageAdapter,
-      settings.skipMetadataInjection
-    ),
-    await generateTouchIconFiles(
-      masterIcon,
-      settings.icon.touch,
-      imageAdapter,
-      settings.skipMetadataInjection
-    ),
+    await generateDesktopFaviconFiles(masterIcon, settings.icon.desktop, imageAdapter, settings.skipMetadataInjection),
+    await generateTouchIconFiles(masterIcon, settings.icon.touch, imageAdapter, settings.skipMetadataInjection),
     await generateWebAppManifestIconFiles(
       masterIcon,
       settings.icon.webAppManifest,
@@ -64,29 +61,20 @@ export const generateFaviconFiles = async (
       pathTransformer,
       fileNameTransformer,
       settings.skipMetadataInjection,
-      settings.version
-    )
-  )
-);
+      settings.version,
+    ),
+  );
 
 export const generateFaviconHtml = (
   settings: FaviconSettings,
-  transformer: FaviconAssetPathTransformer = identityFaviconAssetPathTransformer
+  transformer: FaviconAssetPathTransformer = identityFaviconAssetPathTransformer,
 ): FaviconMarkups => {
   const desktop = generateDesktopFaviconHtml(settings.path, transformer, settings.version);
   const touch = generateTouchIconHtml(settings.path, settings.icon.touch.appTitle, transformer, settings.version);
   const webAppManifest = generateWebAppManifestHtml(settings.path, transformer, settings.version);
 
   return {
-    markups: [
-      ...desktop.markups,
-      ...touch.markups,
-      ...webAppManifest.markups
-    ],
-    cssSelectors: [
-      ...desktop.cssSelectors,
-      ...touch.cssSelectors,
-      ...webAppManifest.cssSelectors
-    ]
-  }
+    markups: [...desktop.markups, ...touch.markups, ...webAppManifest.markups],
+    cssSelectors: [...desktop.cssSelectors, ...touch.cssSelectors, ...webAppManifest.cssSelectors],
+  };
 };

@@ -10,5 +10,4 @@ export const RFG_URL = 'https://realfavicongenerator.net';
 export const addRfgMetadataToPng = (png: Buffer): Buffer =>
   addPngTextMetadata(png, { Software: `${RFG_CREATOR} (${RFG_URL})` });
 
-export const addRfgMetadataToSvg = (svg: string): string =>
-  addSvgMetadata(svg, RFG_CREATOR, RFG_URL);
+export const addRfgMetadataToSvg = (svg: string): string => addSvgMetadata(svg, RFG_CREATOR, RFG_URL);

@@ -1,8 +1,7 @@
-
 export enum CheckerStatus {
   Ok = 'Ok',
   Error = 'Error',
-  Warning = 'Warning'
+  Warning = 'Warning',
 }
 
 export enum MessageId {
@@ -99,71 +98,71 @@ export enum MessageId {
 }
 
 export type CheckerMessage = {
-  status: CheckerStatus,
-  id: MessageId,
-  text: string
-}
+  status: CheckerStatus;
+  id: MessageId;
+  text: string;
+};
 
 export type FetchResponse = {
-  status: number,
-  contentType: string | null,
-  readableStream?: ReadableStream | null
-}
+  status: number;
+  contentType: string | null;
+  readableStream?: ReadableStream | null;
+};
 
 export type Fetcher = (url: string, contentType?: string) => Promise<FetchResponse>;
 
 export type CheckedIcon = {
-  content: string | null,
-  url: string | null,
-  width: number | null,
-  height: number | null
-}
+  content: string | null;
+  url: string | null;
+  width: number | null;
+  height: number | null;
+};
 
 export type DesktopSingleReport = {
-  messages: CheckerMessage[],
-  icon: CheckedIcon | null,
-}
+  messages: CheckerMessage[];
+  icon: CheckedIcon | null;
+};
 
 export type DesktopFaviconReport = {
-  messages: CheckerMessage[],
-  icon: string | null,
+  messages: CheckerMessage[];
+  icon: string | null;
   icons: {
-    png: CheckedIcon | null,
-    ico: CheckedIcon | null,
-    svg: CheckedIcon | null,
-  }
-}
+    png: CheckedIcon | null;
+    ico: CheckedIcon | null;
+    svg: CheckedIcon | null;
+  };
+};
 
 export type TouchIconTitleReport = {
-  messages: CheckerMessage[],
-  appTitle?: string
-}
+  messages: CheckerMessage[];
+  appTitle?: string;
+};
 
 export type TouchIconIconReport = {
-  messages: CheckerMessage[],
-  icon: CheckedIcon | null,
-}
+  messages: CheckerMessage[];
+  icon: CheckedIcon | null;
+};
 
 export type WebAppManifestReport = {
-  messages: CheckerMessage[],
-  name?: string,
-  shortName?: string,
-  backgroundColor?: string,
-  themeColor?: string,
-  icon: CheckedIcon | null
-}
+  messages: CheckerMessage[];
+  name?: string;
+  shortName?: string;
+  backgroundColor?: string;
+  themeColor?: string;
+  icon: CheckedIcon | null;
+};
 
 export type FaviconReport = {
-  pageTitle?: string,
-  desktop: DesktopFaviconReport,
-  touchIcon: TouchIconReport,
-  webAppManifest: WebAppManifestReport
-}
+  pageTitle?: string;
+  desktop: DesktopFaviconReport;
+  touchIcon: TouchIconReport;
+  webAppManifest: WebAppManifestReport;
+};
 
 export type TouchIconReport = TouchIconIconReport & TouchIconTitleReport;
 
 export type GoogleReport = {
-  messages: CheckerMessage[],
-  icon: string | null,
-  icons: CheckedIcon[]
-}
+  messages: CheckerMessage[];
+  icon: string | null;
+  icons: CheckedIcon[];
+};

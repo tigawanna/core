@@ -26,7 +26,7 @@ const toBuffer = async (data: string | Buffer | Blob): Promise<Buffer> => {
     });
   }
   return Buffer.from(data, 'utf8');
-}
+};
 
 export const generateFavicon = async (task: grunt.task.IMultiTask<any>) => {
   const options: any = task.options({});
@@ -53,7 +53,7 @@ export const generateFavicon = async (task: grunt.task.IMultiTask<any>) => {
   // Generate HTML
   const html = await generateFaviconHtml(settings);
 
-  const htmlFiles = grunt.file.expand({nonull: true}, options.html);
+  const htmlFiles = grunt.file.expand({ nonull: true }, options.html);
   for await (const file of htmlFiles) {
     if (!grunt.file.exists(file)) {
       grunt.log.verbose.writeln('The file "' + file + '" does not exist, creating the file so markup can be injected.');
@@ -65,4 +65,4 @@ export const generateFavicon = async (task: grunt.task.IMultiTask<any>) => {
       grunt.file.write(file, newContent);
     }
   }
-}
+};

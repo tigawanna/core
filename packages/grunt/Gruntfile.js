@@ -8,13 +8,12 @@
 
 'use strict';
 
-module.exports = function(grunt) {
-
+module.exports = function (grunt) {
   // Project configuration.
   grunt.initConfig({
     // Before generating any new files, remove any previously-created files.
     clean: {
-      tests: ['tmp']
+      tests: ['tmp'],
     },
 
     // Configuration to be run (and then tested).
@@ -28,27 +27,27 @@ module.exports = function(grunt) {
             desktop: {
               regularIconTransformation: {
                 type: 'background',
-                backgroundColor: "#ffffff",
+                backgroundColor: '#ffffff',
                 backgroundRadius: 0.4,
                 imageScale: 1,
               },
-              darkIconType: "none",
+              darkIconType: 'none',
             },
             touch: {
               transformation: {
                 type: 'none',
               },
-              appTitle: null
+              appTitle: null,
             },
             webAppManifest: {
               transformation: {
                 type: 'none',
               },
-              backgroundColor: "#ff0164",
-              themeColor: "#ff0164",
-              name: "Example",
-              shortName: "Ex"
-            }
+              backgroundColor: '#ff0164',
+              themeColor: '#ff0164',
+              name: 'Example',
+              shortName: 'Ex',
+            },
           },
         },
         // For scenario 3
@@ -59,8 +58,8 @@ module.exports = function(grunt) {
         dest: 'tmp/scenario_1',
         options: {
           html: ['tmp/scenario_1/page*.html', 'tmp/scenario_1/standalone.txt'],
-          iconsPathCallback: function(match, href) {
-            grunt.verbose.writeln('Callback with ' + match + " and " + href);
+          iconsPathCallback: function (match, href) {
+            grunt.verbose.writeln('Callback with ' + match + ' and ' + href);
             return match.toUpperCase();
           },
           settings: {
@@ -69,35 +68,35 @@ module.exports = function(grunt) {
                 regularIconTransformation: {
                   type: 'none',
                 },
-                darkIconType: "none",
+                darkIconType: 'none',
               },
               touch: {
                 transformation: {
                   type: 'none',
                 },
-                appTitle: null
+                appTitle: null,
               },
               webAppManifest: {
                 transformation: {
                   type: 'none',
                 },
-                backgroundColor: "#ffffff",
-                themeColor: "#ffffff",
-                name: "Example",
-                shortName: "Ex"
-              }
-            }
-          }
-        }
+                backgroundColor: '#ffffff',
+                themeColor: '#ffffff',
+                name: 'Example',
+                shortName: 'Ex',
+              },
+            },
+          },
+        },
       },
       scenario_2: {
         src: 'test/fixtures/sample_picture.png',
         dest: 'tmp/scenario_2',
         options: {
-          path: "/",
+          path: '/',
           html: ['tmp/scenario_2/page*.html'],
-          keep: ['meta[property="og:image"]']
-        }
+          keep: ['meta[property="og:image"]'],
+        },
       },
       scenario_3: {
         src: 'test/fixtures/sample_picture.png',
@@ -110,56 +109,50 @@ module.exports = function(grunt) {
                 regularIconTransformation: {
                   type: 'none',
                 },
-                darkIconType: "none",
+                darkIconType: 'none',
               },
               touch: {
                 transformation: {
                   type: 'none',
                 },
-                appTitle: null
+                appTitle: null,
               },
               webAppManifest: {
                 transformation: {
                   type: 'none',
                 },
-                backgroundColor: "#ffffff",
-                themeColor: "#ffffff",
-                name: "Example",
-                shortName: "Ex"
-              }
-            }
+                backgroundColor: '#ffffff',
+                themeColor: '#ffffff',
+                name: 'Example',
+                shortName: 'Ex',
+              },
+            },
           },
           versioning: {
             paramName: 'theVersion',
-            paramValue: '123456'
-          }
-        }
+            paramValue: '123456',
+          },
+        },
       },
     },
 
     // Copy HTML files (they are modified in place)
     copy: {
       scenario_1: {
-        files: [
-          {expand: true, cwd: 'test/fixtures', src: ['*.html'], dest: 'tmp/scenario_1/'}
-        ]
+        files: [{ expand: true, cwd: 'test/fixtures', src: ['*.html'], dest: 'tmp/scenario_1/' }],
       },
       scenario_2: {
-        files: [
-        {expand: true, cwd: 'test/fixtures', src: ['*.html'], dest: 'tmp/scenario_2/'}
-        ]
+        files: [{ expand: true, cwd: 'test/fixtures', src: ['*.html'], dest: 'tmp/scenario_2/' }],
       },
       scenario_3: {
-        files: [
-        {expand: true, cwd: 'test/fixtures', src: ['*.html'], dest: 'tmp/scenario_3/'}
-        ]
-      }
+        files: [{ expand: true, cwd: 'test/fixtures', src: ['*.html'], dest: 'tmp/scenario_3/' }],
+      },
     },
 
     // Unit tests.
     nodeunit: {
-      tests: ['test/*_test.js']
-    }
+      tests: ['test/*_test.js'],
+    },
   });
 
   // Actually load this plugin's task(s).

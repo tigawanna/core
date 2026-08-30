@@ -1,8 +1,8 @@
-import { SVG, Svg } from "@svgdotjs/svg.js";
-import { ImageAdapter } from "./adapter";
-import { numberAliasToNumber } from "../icon/helper";
-import { filterDoctypeOut } from "./helper";
-import { cloneSvg } from "./desktop";
+import { SVG, Svg } from '@svgdotjs/svg.js';
+import { ImageAdapter } from './adapter';
+import { numberAliasToNumber } from '../icon/helper';
+import { filterDoctypeOut } from './helper';
+import { cloneSvg } from './desktop';
 
 export const stringToSvg = (svg: string, imageAdapeter: ImageAdapter): Svg => {
   // We use filterDoctypeOut because of
@@ -58,31 +58,35 @@ export const blobToDataUrl = (blob: Blob): Promise<string> => {
         reject('Failed to read blob');
       }
     };
-    reader.onerror = (e) => {
+    reader.onerror = e => {
       reject(e);
     };
     reader.readAsDataURL(blob);
   });
-}
+};
 
-export const bitmapToSvg = async (binaryData: ArrayBuffer, mimeType: string, imageAdapter: ImageAdapter): Promise<Svg> => {
-  const blob = new Blob([ binaryData ], { type: mimeType });
+export const bitmapToSvg = async (
+  binaryData: ArrayBuffer,
+  mimeType: string,
+  imageAdapter: ImageAdapter,
+): Promise<Svg> => {
+  const blob = new Blob([binaryData], { type: mimeType });
   const url = await blobToDataUrl(blob);
 
   return dataUrlToSvg(url, imageAdapter);
-}
+};
 
 export const httpUrlToDataUrl = async (url: string, imageAdapter: ImageAdapter): Promise<string> => {
   const response = await fetch(url);
   const buffer = await response.arrayBuffer();
   const contentType = response.headers.get('content-type') || 'application/octet-stream';
   return `data:${contentType};base64,${Buffer.from(buffer).toString('base64')}`;
-}
+};
 
 export const anyUrlToSvg = async (url: string, imageAdapter: ImageAdapter): Promise<Svg> => {
   const dataUrl = url.startsWith('http') ? httpUrlToDataUrl(url, imageAdapter) : url;
   return dataUrlToSvg(url, imageAdapter);
-}
+};
 
 export const dataUrlToSvg = async (dataUrl: string, imageAdapter: ImageAdapter): Promise<Svg> => {
   const { width, height } = await imageAdapter.getImageSize(dataUrl);
@@ -95,7 +99,7 @@ export const dataUrlToSvg = async (dataUrl: string, imageAdapter: ImageAdapter):
   svg.viewbox(0, 0, width, height);
 
   return svg;
-}
+};
 
 export const makeFluidSvg = (svg: Svg): Svg => {
   const viewBox = svg.viewbox();
@@ -119,7 +123,7 @@ export const makeFluidSvg = (svg: Svg): Svg => {
   }
 
   return svg;
-}
+};
 
 export const scaleSvg = (svg: Svg, widthHeight: number, imageAdapeter: ImageAdapter): Svg => {
   const newSvg = imageAdapeter.createSvg();
@@ -129,4 +133,4 @@ export const scaleSvg = (svg: Svg, widthHeight: number, imageAdapeter: ImageAdap
   group.add(cloneSvg(svg, imageAdapeter));
 
   return newSvg;
-}
+};

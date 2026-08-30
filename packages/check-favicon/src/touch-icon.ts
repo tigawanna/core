@@ -1,10 +1,22 @@
-import { CheckerMessage, CheckerStatus, Fetcher, MessageId, TouchIconIconReport, TouchIconReport, TouchIconTitleReport } from "./types";
-import { HTMLElement } from 'node-html-parser'
-import { CheckIconOutput, CheckIconProcessor, checkIcon, fetchFetcher, mergeUrlAndPath } from "./helper";
+import {
+  CheckerMessage,
+  CheckerStatus,
+  Fetcher,
+  MessageId,
+  TouchIconIconReport,
+  TouchIconReport,
+  TouchIconTitleReport,
+} from './types';
+import { HTMLElement } from 'node-html-parser';
+import { CheckIconOutput, CheckIconProcessor, checkIcon, fetchFetcher, mergeUrlAndPath } from './helper';
 
 export const TouchIconFileSize = 180;
 
-export const checkTouchIconTitle = async (baseUrl: string, head: HTMLElement | null, fetcher: Fetcher = fetchFetcher): Promise<TouchIconTitleReport> => {
+export const checkTouchIconTitle = async (
+  baseUrl: string,
+  head: HTMLElement | null,
+  fetcher: Fetcher = fetchFetcher,
+): Promise<TouchIconTitleReport> => {
   const messages: CheckerMessage[] = [];
   let appTitle = undefined;
 
@@ -12,7 +24,7 @@ export const checkTouchIconTitle = async (baseUrl: string, head: HTMLElement | n
     messages.push({
       status: CheckerStatus.Error,
       id: MessageId.noHead,
-      text: 'No <head> element'
+      text: 'No <head> element',
     });
 
     return { messages };
@@ -23,7 +35,7 @@ export const checkTouchIconTitle = async (baseUrl: string, head: HTMLElement | n
     messages.push({
       status: CheckerStatus.Warning,
       id: MessageId.noTouchWebAppTitle,
-      text: 'No touch web app title declared'
+      text: 'No touch web app title declared',
     });
 
     return { messages };
@@ -33,7 +45,7 @@ export const checkTouchIconTitle = async (baseUrl: string, head: HTMLElement | n
     messages.push({
       status: CheckerStatus.Error,
       id: MessageId.multipleTouchWebAppTitles,
-      text: `The touch web app title is declared ${titleMarkup.length} times`
+      text: `The touch web app title is declared ${titleMarkup.length} times`,
     });
 
     return { messages };
@@ -43,7 +55,7 @@ export const checkTouchIconTitle = async (baseUrl: string, head: HTMLElement | n
     messages.push({
       status: CheckerStatus.Error,
       id: MessageId.emptyTouchWebAppTitle,
-      text: 'The touch web app title has no content'
+      text: 'The touch web app title has no content',
     });
 
     return { messages };
@@ -53,13 +65,17 @@ export const checkTouchIconTitle = async (baseUrl: string, head: HTMLElement | n
   messages.push({
     status: CheckerStatus.Ok,
     id: MessageId.touchWebAppTitleDeclared,
-    text: `The touch web app title is "${appTitle}"`
+    text: `The touch web app title is "${appTitle}"`,
   });
 
   return { messages, appTitle };
-}
+};
 
-export const checkTouchIconIcon = async (baseUrl: string, head: HTMLElement | null, fetcher: Fetcher = fetchFetcher): Promise<TouchIconIconReport> => {
+export const checkTouchIconIcon = async (
+  baseUrl: string,
+  head: HTMLElement | null,
+  fetcher: Fetcher = fetchFetcher,
+): Promise<TouchIconIconReport> => {
   const messages: CheckerMessage[] = [];
   let icon: CheckIconOutput | null = null;
 
@@ -67,7 +83,7 @@ export const checkTouchIconIcon = async (baseUrl: string, head: HTMLElement | nu
     messages.push({
       status: CheckerStatus.Error,
       id: MessageId.noHead,
-      text: 'No <head> element'
+      text: 'No <head> element',
     });
 
     return { messages, icon };
@@ -78,7 +94,7 @@ export const checkTouchIconIcon = async (baseUrl: string, head: HTMLElement | nu
     messages.push({
       status: CheckerStatus.Error,
       id: MessageId.noTouchIcon,
-      text: 'No touch icon declared'
+      text: 'No touch icon declared',
     });
 
     return { messages, icon };
@@ -87,7 +103,7 @@ export const checkTouchIconIcon = async (baseUrl: string, head: HTMLElement | nu
   messages.push({
     status: CheckerStatus.Ok,
     id: MessageId.touchIconDeclared,
-    text: 'The touch icon is declared'
+    text: 'The touch icon is declared',
   });
 
   const duplicatedSizes = getDuplicatedSizes(iconMarkup.map(icon => icon.getAttribute('sizes')));
@@ -95,7 +111,7 @@ export const checkTouchIconIcon = async (baseUrl: string, head: HTMLElement | nu
     messages.push({
       status: CheckerStatus.Error,
       id: MessageId.duplicatedTouchIconSizes,
-      text: `The touch icon sizes ${duplicatedSizes.map(s => s || '(no size)').join(', ')} are declared more than once`
+      text: `The touch icon sizes ${duplicatedSizes.map(s => s || '(no size)').join(', ')} are declared more than once`,
     });
   }
 
@@ -104,7 +120,7 @@ export const checkTouchIconIcon = async (baseUrl: string, head: HTMLElement | nu
     messages.push({
       status: CheckerStatus.Error,
       id: MessageId.noTouchIconHref,
-      text: 'The touch icon has no href'
+      text: 'The touch icon has no href',
     });
 
     return { messages, icon };
@@ -113,87 +129,85 @@ export const checkTouchIconIcon = async (baseUrl: string, head: HTMLElement | nu
   const touchIconUrl = mergeUrlAndPath(baseUrl, iconHref);
 
   const processor: CheckIconProcessor = {
-    cannotGet: (status) => {
+    cannotGet: status => {
       messages.push({
         status: CheckerStatus.Error,
         id: MessageId.touchIconCannotGet,
-        text: `The touch icon cannot be fetched (${status})`
+        text: `The touch icon cannot be fetched (${status})`,
       });
     },
     downloadable: () => {
       messages.push({
         status: CheckerStatus.Ok,
         id: MessageId.touchIconDownloadable,
-        text: 'The touch icon is downloadable'
+        text: 'The touch icon is downloadable',
       });
     },
     icon404: () => {
       messages.push({
         status: CheckerStatus.Error,
         id: MessageId.touchIcon404,
-        text: `The touch icon at ${touchIconUrl} is not found`
+        text: `The touch icon at ${touchIconUrl} is not found`,
       });
     },
     noHref: () => {
       messages.push({
         status: CheckerStatus.Error,
         id: MessageId.noTouchIconHref,
-        text: 'The touch icon markup has no href'
+        text: 'The touch icon markup has no href',
       });
     },
     notSquare: (width, height) => {
       messages.push({
         status: CheckerStatus.Error,
         id: MessageId.touchIconNotSquare,
-        text: `The touch icon is not square (${width}x${height})`
+        text: `The touch icon is not square (${width}x${height})`,
       });
     },
-    rightSize: (width) => {
+    rightSize: width => {
       messages.push({
         status: CheckerStatus.Ok,
         id: MessageId.touchIcon180x180,
-        text: `The touch icon has the right size (${width}x${width})`
+        text: `The touch icon has the right size (${width}x${width})`,
       });
     },
-    square: (width) => {
+    square: width => {
       messages.push({
         status: CheckerStatus.Ok,
         id: MessageId.touchIconSquare,
-        text: `The touch icon is square (${width}x${width})`
+        text: `The touch icon is square (${width}x${width})`,
       });
     },
-    wrongSize: (width) => {
+    wrongSize: width => {
       messages.push({
         status: CheckerStatus.Error,
         id: MessageId.touchIconWrongSize,
-        text: `The touch icon has a wrong size (${width}x${width})`
+        text: `The touch icon has a wrong size (${width}x${width})`,
       });
-    }
-  }
+    },
+  };
 
-  icon = await checkIcon(
-    touchIconUrl,
-    processor,
-    fetcher,
-    undefined,
-    TouchIconFileSize
-  );
+  icon = await checkIcon(touchIconUrl, processor, fetcher, undefined, TouchIconFileSize);
 
   return { messages, icon };
-}
+};
 
 export const getDuplicatedSizes = (sizes: (string | undefined)[]): (string | undefined)[] => {
   const duplicated = sizes.filter((size, index) => sizes.indexOf(size, index + 1) >= 0);
   return duplicated.filter((size, index) => duplicated.indexOf(size) === index);
-}
+};
 
-export const checkTouchIcon = async (baseUrl: string, head: HTMLElement | null, fetcher: Fetcher = fetchFetcher): Promise<TouchIconReport> => {
+export const checkTouchIcon = async (
+  baseUrl: string,
+  head: HTMLElement | null,
+  fetcher: Fetcher = fetchFetcher,
+): Promise<TouchIconReport> => {
   const titleReport = await checkTouchIconTitle(baseUrl, head, fetcher);
   const iconReport = await checkTouchIconIcon(baseUrl, head, fetcher);
 
   return {
     messages: [...titleReport.messages, ...iconReport.messages],
     appTitle: titleReport.appTitle,
-    icon: iconReport.icon
-  }
-}
+    icon: iconReport.icon,
+  };
+};

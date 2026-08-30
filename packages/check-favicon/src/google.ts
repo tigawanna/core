@@ -1,8 +1,16 @@
-import robotsParser from "robots-parser";
-import { checkDesktopFavicon } from "./desktop/desktop";
-import { fetchFetcher, readableStreamToString } from "./helper";
-import { CheckedIcon, CheckerMessage, CheckerStatus, DesktopFaviconReport, Fetcher, GoogleReport, MessageId } from "./types";
-import { HTMLElement } from "node-html-parser";
+import robotsParser from 'robots-parser';
+import { checkDesktopFavicon } from './desktop/desktop';
+import { fetchFetcher, readableStreamToString } from './helper';
+import {
+  CheckedIcon,
+  CheckerMessage,
+  CheckerStatus,
+  DesktopFaviconReport,
+  Fetcher,
+  GoogleReport,
+  MessageId,
+} from './types';
+import { HTMLElement } from 'node-html-parser';
 
 export const GoogleBot = 'Googlebot';
 export const GoogleImageBot = 'Googlebot-Image';
@@ -10,25 +18,25 @@ export const GoogleImageBot = 'Googlebot-Image';
 export type RobotsIconType = 'png' | 'ico' | 'svg';
 
 export type RobotsIcon = {
-  url: string,
-  type: RobotsIconType
-}
+  url: string;
+  type: RobotsIconType;
+};
 
 type Robots = ReturnType<typeof robotsParser>;
 
-const robotsMessageIds: { [type in RobotsIconType]: { allowed: MessageId, blocked: MessageId } } = {
+const robotsMessageIds: { [type in RobotsIconType]: { allowed: MessageId; blocked: MessageId } } = {
   png: {
     allowed: MessageId.googlePngIconAllowedByRobots,
-    blocked: MessageId.googlePngIconBlockedByRobots
+    blocked: MessageId.googlePngIconBlockedByRobots,
   },
   ico: {
     allowed: MessageId.googleIcoAllowedByRobots,
-    blocked: MessageId.googleIcoBlockedByRobots
+    blocked: MessageId.googleIcoBlockedByRobots,
   },
   svg: {
     allowed: MessageId.googleSvgIconAllowedByRobots,
-    blocked: MessageId.googleSvgIconBlockedByRobots
-  }
+    blocked: MessageId.googleSvgIconBlockedByRobots,
+  },
 };
 
 export const getRobotsFileUrl = (baseUrl: string): string => {
@@ -39,7 +47,7 @@ export const getRobotsFileUrl = (baseUrl: string): string => {
   } catch (error) {
     throw new Error(`Invalid URL ${baseUrl}`);
   }
-}
+};
 
 const getOrigin = (url: string): string | null => {
   try {
@@ -47,7 +55,7 @@ const getOrigin = (url: string): string | null => {
   } catch (error) {
     return null;
   }
-}
+};
 
 // Returns null when the origin has no robots.txt file, which means everything is allowed.
 const fetchRobotsFile = async (robotsUrl: string, fetcher: Fetcher): Promise<Robots | null> => {
@@ -60,9 +68,13 @@ const fetchRobotsFile = async (robotsUrl: string, fetcher: Fetcher): Promise<Rob
   const robotsFile = robotsResponse.readableStream ? await readableStreamToString(robotsResponse.readableStream) : '';
 
   return robotsParser(robotsUrl, robotsFile);
-}
+};
 
-export const checkRobotsFile = async (baseUrl: string, icons: RobotsIcon[], fetcher: Fetcher = fetchFetcher): Promise<CheckerMessage[]> => {
+export const checkRobotsFile = async (
+  baseUrl: string,
+  icons: RobotsIcon[],
+  fetcher: Fetcher = fetchFetcher,
+): Promise<CheckerMessage[]> => {
   const messages: CheckerMessage[] = [];
 
   const pageRobotsUrl = getRobotsFileUrl(baseUrl);
@@ -72,13 +84,13 @@ export const checkRobotsFile = async (baseUrl: string, icons: RobotsIcon[], fetc
     messages.push({
       status: CheckerStatus.Ok,
       text: `robots.txt file found at ${pageRobotsUrl}`,
-      id: MessageId.googleRobotsFileFound
+      id: MessageId.googleRobotsFileFound,
     });
   } else {
     messages.push({
       status: CheckerStatus.Ok,
       text: `No \`robots.txt\` file found at \`${pageRobotsUrl}\`. Also this is not a recommanded setup, at least Google is not restricted from accessing favicon assets.`,
-      id: MessageId.googleNoRobotsFile
+      id: MessageId.googleNoRobotsFile,
     });
   }
 
@@ -86,7 +98,7 @@ export const checkRobotsFile = async (baseUrl: string, icons: RobotsIcon[], fetc
   // `Googlebot-Image` obeys the robots.txt file of the CDN, not the one of the page.
   // So each icon is checked against the robots.txt file of its own origin, with one
   // fetch per distinct origin.
-  const robotsByOrigin = new Map<string, { robots: Robots | null, url: string }>();
+  const robotsByOrigin = new Map<string, { robots: Robots | null; url: string }>();
 
   const pageOrigin = getOrigin(baseUrl);
   if (pageOrigin) {
@@ -117,26 +129,30 @@ export const checkRobotsFile = async (baseUrl: string, icons: RobotsIcon[], fetc
       messages.push({
         status: CheckerStatus.Ok,
         text: `Access to \`${icon.url}\` is allowed for \`${GoogleImageBot}\``,
-        id: ids.allowed
+        id: ids.allowed,
       });
     } else {
       const line = robots.getMatchingLineNumber(icon.url, GoogleImageBot);
       messages.push({
         status: CheckerStatus.Error,
         text: `Access to \`${icon.url}\` is blocked for \`${GoogleImageBot}\` (\`${entry?.url}\`, line ${line})`,
-        id: ids.blocked
+        id: ids.blocked,
       });
     }
   }
 
   return messages;
-}
+};
 
-export const checkGoogleFaviconFromDesktopReport = async (baseUrl: string, desktopReport: DesktopFaviconReport, fetcher: Fetcher = fetchFetcher): Promise<GoogleReport> => {
-  const typedIcons: { icon: CheckedIcon | null, type: RobotsIconType }[] = [
+export const checkGoogleFaviconFromDesktopReport = async (
+  baseUrl: string,
+  desktopReport: DesktopFaviconReport,
+  fetcher: Fetcher = fetchFetcher,
+): Promise<GoogleReport> => {
+  const typedIcons: { icon: CheckedIcon | null; type: RobotsIconType }[] = [
     { icon: desktopReport.icons.png, type: 'png' },
     { icon: desktopReport.icons.ico, type: 'ico' },
-    { icon: desktopReport.icons.svg, type: 'svg' }
+    { icon: desktopReport.icons.svg, type: 'svg' },
   ];
 
   const allIcons: CheckedIcon[] = typedIcons.map(i => i.icon).filter((i): i is CheckedIcon => !!i);
@@ -150,7 +166,7 @@ export const checkGoogleFaviconFromDesktopReport = async (baseUrl: string, deskt
 
   const robotsMessages = await checkRobotsFile(baseUrl, robotsIcons, fetcher);
 
-  const messages: CheckerMessage[] = [ ...desktopReport.messages, ...robotsMessages ];
+  const messages: CheckerMessage[] = [...desktopReport.messages, ...robotsMessages];
 
   let finalIcon: string | null = null;
   let icons: CheckedIcon[] = [];
@@ -169,11 +185,15 @@ export const checkGoogleFaviconFromDesktopReport = async (baseUrl: string, deskt
   return {
     messages,
     icon: finalIcon,
-    icons
-  }
-}
+    icons,
+  };
+};
 
-export const checkGoogleFavicon = async (baseUrl: string, head: HTMLElement | null, fetcher: Fetcher = fetchFetcher): Promise<GoogleReport> => {
+export const checkGoogleFavicon = async (
+  baseUrl: string,
+  head: HTMLElement | null,
+  fetcher: Fetcher = fetchFetcher,
+): Promise<GoogleReport> => {
   const desktopReport = await checkDesktopFavicon(baseUrl, head, fetcher);
   return checkGoogleFaviconFromDesktopReport(baseUrl, desktopReport, fetcher);
-}
+};

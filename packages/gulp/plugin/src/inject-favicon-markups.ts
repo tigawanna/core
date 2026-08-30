@@ -5,12 +5,12 @@ import PluginError from 'plugin-error';
 var PluginName = '@realfavicongenerator/gulp-real-favicon';
 
 type InjectMarkupsParams = {
-  markups: string[],
-  cssSelectors: string[]
-}
+  markups: string[];
+  cssSelectors: string[];
+};
 
 export const injectFaviconMarkups = (params: InjectMarkupsParams) => {
-  var stream = through.obj(function(file, enc, cb) {
+  var stream = through.obj(function (file, enc, cb) {
     if (file.isBuffer()) {
       const newContent = injectMarkupInHtmlHead(file.contents, params.markups, params.cssSelectors);
       file.contents = Buffer.from(newContent);
@@ -25,4 +25,4 @@ export const injectFaviconMarkups = (params: InjectMarkupsParams) => {
 
   // returning the file stream
   return stream;
-}
+};
