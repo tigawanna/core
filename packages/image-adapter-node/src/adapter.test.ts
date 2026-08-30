@@ -3,13 +3,17 @@ import * as fs from 'fs';
 import * as path from 'path';
 import sharp from 'sharp';
 
+// The suite runs as an ES module (see jest.config.js), where __dirname is
+// not defined. Jest's working directory is the package root.
+const fixturesDir = path.join(process.cwd(), 'fixtures');
+
 describe('NodeImageAdapter', () => {
   describe('getImageSize', () => {
     it('should return correct dimensions for a PNG image', async () => {
       const adapter = await getNodeImageAdapter();
 
       // Read the test image from fixtures
-      const imagePath = path.join(__dirname, '../fixtures/test-image.png');
+      const imagePath = path.join(fixturesDir, 'test-image.png');
       const imageBuffer = fs.readFileSync(imagePath);
 
       // Convert to data URL
@@ -53,7 +57,7 @@ describe('NodeImageAdapter', () => {
       const adapter = await getNodeImageAdapter();
 
       // Read the test image from fixtures
-      const imagePath = path.join(__dirname, '../fixtures/test-image.png');
+      const imagePath = path.join(fixturesDir, 'test-image.png');
       const imageBuffer = fs.readFileSync(imagePath);
 
       // Convert to data URL
@@ -64,7 +68,7 @@ describe('NodeImageAdapter', () => {
       const rawData = await adapter.getImageData(dataUrl, 80);
 
       // Read the reference image and convert to raw data
-      const referencePath = path.join(__dirname, '../fixtures/test-image-small-square.png');
+      const referencePath = path.join(fixturesDir, 'test-image-small-square.png');
       const referenceBuffer = fs.readFileSync(referencePath);
       const referenceRawData = await sharp(referenceBuffer).raw().toBuffer();
 
