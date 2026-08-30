@@ -1,0 +1,8 @@
+# Line endings are LF in the repository and in every working tree, whatever the
+# platform. This matches "endOfLine": "lf" in .prettierrc: without it, a checkout
+# on Windows would reintroduce CRLF and Prettier would flag every file.
+* text=auto eol=lf
+
+# Binary assets: never normalised, never diffed as text
+*.png binary
+*.ico binary
