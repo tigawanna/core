@@ -1,6 +1,7 @@
 import { CheckedIcon, CheckerMessage, CheckerStatus, DesktopSingleReport, Fetcher, MessageId } from "../types";
 import { HTMLElement } from 'node-html-parser'
 import { bufferToDataUrl, mergeUrlAndPath, readableStreamToBuffer } from "../helper";
+import { findIconDeclarations, resolveIconDeclarations } from "./declarations";
 import decodeIco from "decode-ico";
 
 export const IcoFaviconSizes = [ 48, 32, 16 ];
@@ -21,22 +22,14 @@ export const checkIcoFavicon = async (url: string, head: HTMLElement | null, fet
     };
   }
 
-  const icos = [
-    ...head.querySelectorAll('link[rel="shortcut icon"]'),
-    ...head.querySelectorAll('link[rel="icon"][type="image/x-icon"]')
-  ];
+  const icos = findIconDeclarations(url, head, 'ico');
+  const { withHref, distinctUrls, winner } = resolveIconDeclarations(icos);
 
   let iconUrl: string | null = null;
   let images;
   let isDeclared = false;
 
-  if (icos.length > 1) {
-    messages.push({
-      status: CheckerStatus.Error,
-      id: MessageId.multipleIcoFavicons,
-      text: `There are ${icos.length} ICO favicons`
-    });
-  } else if (icos.length === 1) {
+  if (icos.length > 0) {
     isDeclared = true;
     messages.push({
       status: CheckerStatus.Ok,
@@ -44,15 +37,28 @@ export const checkIcoFavicon = async (url: string, head: HTMLElement | null, fet
       text: 'The ICO favicon is declared'
     });
 
-    const href = icos[0].attributes.href;
-    if (!href) {
+    if (!winner) {
       messages.push({
         status: CheckerStatus.Error,
         id: MessageId.noIcoFaviconHref,
         text: 'The ICO markup has no href attribute'
       });
     } else {
-      iconUrl = mergeUrlAndPath(url, href);
+      if (distinctUrls.length > 1) {
+        messages.push({
+          status: CheckerStatus.Warning,
+          id: MessageId.multipleIcoFavicons,
+          text: `There are ${distinctUrls.length} ICO favicons (${distinctUrls.join(', ')}). Browsers use the last one, ${winner.url}`
+        });
+      } else if (withHref.length > 1) {
+        messages.push({
+          status: CheckerStatus.Warning,
+          id: MessageId.duplicatedIcoFaviconDeclarations,
+          text: `The ICO favicon ${winner.url} is declared ${withHref.length} times`
+        });
+      }
+
+      iconUrl = winner.url;
     }
   } else {
     // No declared ICO favicon, try the implicit /favicon.ico convention

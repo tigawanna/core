@@ -90,6 +90,12 @@ export enum MessageId {
   googleSvgIconAllowedByRobots,
   googlePngIconBlockedByRobots,
   googlePngIconAllowedByRobots,
+
+  // MessageId is a numeric enum, so new ids are appended here rather than added
+  // to the group they belong to: inserting one in the middle would renumber
+  // every id after it.
+  duplicatedIcoFaviconDeclarations,
+  duplicatedSvgFaviconDeclarations,
 }
 
 export type CheckerMessage = {

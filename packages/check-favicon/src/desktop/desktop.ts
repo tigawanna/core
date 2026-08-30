@@ -3,6 +3,7 @@ import { HTMLElement } from 'node-html-parser'
 import sharp from 'sharp'
 import { CheckIconProcessor, bufferToDataUrl, checkIcon, fetchFetcher, mergeUrlAndPath, readableStreamToString } from "../helper";
 import { checkIcoFavicon } from "./ico";
+import { findIconDeclarations, resolveIconDeclarations } from "./declarations";
 
 export const PngFaviconFileSize = 96;
 
@@ -22,18 +23,12 @@ export const checkSvgFavicon = async (baseUrl: string, head: HTMLElement | null,
     };
   }
 
-  const svgs = head?.querySelectorAll("link[rel='icon'][type='image/svg+xml']");
+  const svgs = findIconDeclarations(baseUrl, head, 'svg');
   if (svgs.length === 0) {
     messages.push({
       status: CheckerStatus.Error,
       id: MessageId.noSvgFavicon,
       text: 'There is no SVG favicon'
-    });
-  } else if (svgs.length > 1) {
-    messages.push({
-      status: CheckerStatus.Error,
-      id: MessageId.multipleSvgFavicons,
-      text: `There are ${svgs.length} SVG favicons`
     });
   } else {
     messages.push({
@@ -42,15 +37,29 @@ export const checkSvgFavicon = async (baseUrl: string, head: HTMLElement | null,
       text: 'The SVG favicon is declared'
     });
 
-    const href = svgs[0].attributes.href;
-    if (!href) {
+    const { withHref, distinctUrls, winner } = resolveIconDeclarations(svgs);
+    if (!winner) {
       messages.push({
         status: CheckerStatus.Error,
         id: MessageId.noSvgFaviconHref,
         text: 'The SVG markup has no href attribute'
       });
     } else {
-      const iconReport = await checkSvgFaviconFile(baseUrl, href, fetcher)
+      if (distinctUrls.length > 1) {
+        messages.push({
+          status: CheckerStatus.Warning,
+          id: MessageId.multipleSvgFavicons,
+          text: `There are ${distinctUrls.length} SVG favicons (${distinctUrls.join(', ')}). Browsers use the last one, ${winner.url}`
+        });
+      } else if (withHref.length > 1) {
+        messages.push({
+          status: CheckerStatus.Warning,
+          id: MessageId.duplicatedSvgFaviconDeclarations,
+          text: `The SVG favicon ${winner.url} is declared ${withHref.length} times`
+        });
+      }
+
+      const iconReport = await checkSvgFaviconFile(baseUrl, winner.href as string, fetcher)
       return {
         messages: [ ...messages, ...iconReport.messages ],
         icon: iconReport.icon
@@ -135,7 +144,7 @@ export const checkPngFavicon = async (baseUrl: string, head: HTMLElement | null,
     return { messages, icon: { content: null, url: null, width: null, height: null } };
   }
 
-  const icons = head?.querySelectorAll("link[rel='icon'][type='image/png']");
+  const icons = findIconDeclarations(baseUrl, head, 'png').map(declaration => declaration.markup);
   if (icons.length === 0) {
     messages.push({
       status: CheckerStatus.Error,

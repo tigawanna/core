@@ -48,18 +48,88 @@ test('checkSvgFavicon - noSvgFavicon', async () => {
   });
 })
 
+// Two genuinely different SVG files: the last declaration wins, the way browsers
+// resolve it, and the competing declarations are only worth a warning.
 test('checkSvgFavicon - multipleSvgFavicons', async () => {
   await runSvgTest(`
   <link rel="icon" type="image/svg+xml" href="/the-icon.svg" />
   <link rel="icon" type="image/svg+xml" href="/another-icon.svg" />
   `, {
     messages: [{
-      status: CheckerStatus.Error,
+      status: CheckerStatus.Ok,
+      id: MessageId.svgFaviconDeclared,
+    }, {
+      status: CheckerStatus.Warning,
       id: MessageId.multipleSvgFavicons,
+    }, {
+      status: CheckerStatus.Error,
+      id: MessageId.svgFavicon404,
     }], icons: {
       png: null,
       ico: null,
       svg: null,
+    }
+  });
+})
+
+// rel="icon" with an .svg href and no type attribute: the type is only a hint,
+// the declaration must be seen all the same.
+test('checkSvgFavicon - untyped .svg href', async () => {
+  const testIconPath = './fixtures/happy-face.svg';
+
+  await runSvgTest(`<link rel="icon" href="/the-icon.svg" />`, {
+    messages: [{
+      status: CheckerStatus.Ok,
+      id: MessageId.svgFaviconDeclared,
+    }, {
+      status: CheckerStatus.Ok,
+      id: MessageId.svgFaviconDownloadable,
+    }, {
+      status: CheckerStatus.Ok,
+      id: MessageId.svgFaviconSquare,
+    }], icons: {
+      png: null,
+      ico: null,
+      svg: null,
+    }
+  }, {
+    'https://example.com/the-icon.svg': {
+      status: 200,
+      contentType: 'image/svg+xml',
+      readableStream: await filePathToReadableStream(testIconPath)
+    }
+  });
+})
+
+test('checkSvgFavicon - the same SVG URL declared twice', async () => {
+  const testIconPath = './fixtures/happy-face.svg';
+
+  await runSvgTest(`
+  <link rel="icon" type="image/svg+xml" href="/the-icon.svg" />
+  <link rel="icon" href="/the-icon.svg" />
+  `, {
+    messages: [{
+      status: CheckerStatus.Ok,
+      id: MessageId.svgFaviconDeclared,
+    }, {
+      status: CheckerStatus.Warning,
+      id: MessageId.duplicatedSvgFaviconDeclarations,
+    }, {
+      status: CheckerStatus.Ok,
+      id: MessageId.svgFaviconDownloadable,
+    }, {
+      status: CheckerStatus.Ok,
+      id: MessageId.svgFaviconSquare,
+    }], icons: {
+      png: null,
+      ico: null,
+      svg: null,
+    }
+  }, {
+    'https://example.com/the-icon.svg': {
+      status: 200,
+      contentType: 'image/svg+xml',
+      readableStream: await filePathToReadableStream(testIconPath)
     }
   });
 })
@@ -251,6 +321,41 @@ test('checkSvgFavicon - Three PNG icons with different sizes', async () => {
       status: 200,
       contentType: 'image/png',
       readableStream: await filePathToReadableStream(testIcon48),
+    },
+    'https://example.com/favicon/favicon-96x96.png': {
+      status: 200,
+      contentType: 'image/png',
+      readableStream: await filePathToReadableStream(testIcon96),
+    }
+  });
+})
+
+// rel="icon" with a .png href and no type attribute
+test('checkPngFavicon - untyped .png href', async () => {
+  await runPngTest(`
+    <link rel="icon" sizes="16x16" href="/favicon/favicon-16x16.png">
+    <link rel="icon" sizes="96x96" href="/favicon/favicon-96x96.png">
+  `, { messages: [{
+      status: CheckerStatus.Ok,
+      id: MessageId.desktopPngFaviconDeclared,
+    }, {
+      status: CheckerStatus.Ok,
+      id: MessageId.desktopPngFaviconDownloadable,
+    }, {
+      status: CheckerStatus.Ok,
+      id: MessageId.desktopPngFaviconRightSize,
+    }],
+    icons: {
+      png: null,
+      ico: null,
+      svg: null,
+    }
+  },
+  {
+    'https://example.com/favicon/favicon-16x16.png': {
+      status: 200,
+      contentType: 'image/png',
+      readableStream: await filePathToReadableStream(testIcon16),
     },
     'https://example.com/favicon/favicon-96x96.png': {
       status: 200,
