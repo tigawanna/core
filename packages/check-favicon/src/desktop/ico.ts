@@ -3,8 +3,29 @@ import { HTMLElement } from 'node-html-parser';
 import { bufferToDataUrl, mergeUrlAndPath, readableStreamToBuffer } from '../helper';
 import { findIconDeclarations, resolveIconDeclarations } from './declarations';
 import decodeIco from 'decode-ico';
+import sharp from 'sharp';
 
 export const IcoFaviconSizes = [48, 32, 16];
+
+type IcoImage = ReturnType<typeof decodeIco>[number];
+
+/**
+ * One image of an ICO file, as PNG bytes.
+ *
+ * `decode-ico` hands back the original file for a PNG entry, but raw RGBA
+ * pixels for a BMP one — no BMP header, so serving those as `image/bmp` builds
+ * a data URL no browser can display. Encode the pixels instead.
+ */
+const icoImageToPng = async (image: IcoImage): Promise<Buffer> => {
+  const data = Buffer.from(image.data.buffer, image.data.byteOffset, image.data.byteLength);
+  if (image.type === 'png') {
+    return data;
+  }
+
+  return sharp(data, { raw: { width: image.width, height: image.height, channels: 4 } })
+    .png()
+    .toBuffer();
+};
 
 export const checkIcoFavicon = async (
   url: string,
@@ -162,11 +183,7 @@ export const checkIcoFavicon = async (
   };
   if (images) {
     const image = images[0];
-    const mimeType = image.type === 'bmp' ? 'image/bmp' : 'image/png';
-    theIcon.content = bufferToDataUrl(
-      Buffer.from(image.data.buffer, image.data.byteOffset, image.data.byteLength),
-      mimeType,
-    );
+    theIcon.content = bufferToDataUrl(await icoImageToPng(image), 'image/png');
     theIcon.width = image.width;
     theIcon.height = image.height;
   }

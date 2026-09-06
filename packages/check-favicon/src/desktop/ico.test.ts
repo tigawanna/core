@@ -3,6 +3,7 @@ import { checkIcoFavicon } from './ico';
 import { CheckerMessage, CheckerStatus, DesktopSingleReport, FetchResponse, MessageId } from '../types';
 import { filePathToReadableStream } from '../helper';
 import { testFetcher } from '../test-helper';
+import sharp from 'sharp';
 
 type TestOutput = {
   messages: Pick<CheckerMessage, 'id' | 'status'>[];
@@ -33,7 +34,7 @@ const runIcoTest = async (
     expect(resultIcon.content).toBeNull();
   } else if (checkContent && outputIcon.content !== null) {
     expect(resultIcon.content).not.toBeNull();
-    expect(resultIcon.content).toMatch(/^data:image\/(png|bmp);base64,/);
+    expect(resultIcon.content).toMatch(/^data:image\/png;base64,/);
   }
 };
 
@@ -590,4 +591,49 @@ test('checkIcoFavicon - Protocol-relative URL', async () => {
       },
     },
   );
+});
+
+// `decode-ico` returns the original file for a PNG entry, but raw RGBA pixels
+// for a BMP one. Handing those pixels over as `image/bmp` built a data URL no
+// browser could display, which broke the previews of every site whose favicon
+// is a plain ICO — amazon.com among them.
+const iconOfIcoFile = async (path: string) => {
+  const root = parse(`<link rel="icon" href="/favicon.ico" />`);
+  const result = await checkIcoFavicon(
+    'https://example.com/',
+    root,
+    testFetcher({
+      'https://example.com/favicon.ico': {
+        status: 200,
+        contentType: 'image/x-icon',
+        readableStream: await filePathToReadableStream(path),
+      },
+    }),
+  );
+
+  return result.icon;
+};
+
+test('checkIcoFavicon - a BMP encoded ICO yields a displayable PNG', async () => {
+  const icon = await iconOfIcoFile('./fixtures/simple-ico.ico');
+
+  expect(icon?.content).toMatch(/^data:image\/png;base64,/);
+  const meta = await sharp(Buffer.from((icon?.content as string).split(',')[1], 'base64')).metadata();
+  expect({ format: meta.format, width: meta.width, height: meta.height }).toEqual({
+    format: 'png',
+    width: 48,
+    height: 48,
+  });
+});
+
+test('checkIcoFavicon - a PNG encoded ICO is passed through', async () => {
+  const icon = await iconOfIcoFile('./fixtures/lemonde.ico');
+
+  expect(icon?.content).toMatch(/^data:image\/png;base64,/);
+  const meta = await sharp(Buffer.from((icon?.content as string).split(',')[1], 'base64')).metadata();
+  expect({ format: meta.format, width: meta.width, height: meta.height }).toEqual({
+    format: 'png',
+    width: 32,
+    height: 32,
+  });
 });
