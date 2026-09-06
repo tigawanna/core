@@ -1,6 +1,6 @@
 {
   "name": "@realfavicongenerator/inject-markups",
-  "version": "0.8.6",
+  "version": "0.9.0",
   "description": "Inject markups created by RealFaviconGenerator into an HTML document",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
