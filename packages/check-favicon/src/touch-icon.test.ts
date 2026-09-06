@@ -785,7 +785,14 @@ test('parseTouchIconSizes', () => {
 
 test('touchIconSizeVerdict', () => {
   expect([57, 72, 114, 144].map(touchIconSizeVerdict)).toEqual(['legacy', 'legacy', 'legacy', 'legacy']);
-  expect([60, 76, 120, 152].map(touchIconSizeVerdict)).toEqual(['redundant', 'redundant', 'redundant', 'redundant']);
+  expect([60, 76, 120, 152, 167].map(touchIconSizeVerdict)).toEqual([
+    'redundant',
+    'redundant',
+    'redundant',
+    'redundant',
+    // The iPad Retina size of Apple's own example, not a mistake
+    'redundant',
+  ]);
   expect([16, 32, 48, 96, 179].map(touchIconSizeVerdict)).toEqual([
     'unexpected',
     'unexpected',

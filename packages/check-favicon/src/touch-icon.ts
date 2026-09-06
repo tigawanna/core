@@ -15,7 +15,9 @@ export const TouchIconFileSize = 180;
 
 // The sizes iOS asked for before it settled on 180x180.
 const LegacyIosTouchIconSizes = [57, 72, 114, 144]; // iOS 6 and prior
-const ModernIosTouchIconSizes = [60, 76, 120, 152]; // iOS 7 and above
+// iOS 7 and above. 167 is the iPad Retina size of Apple's own example in
+// `Configuring Web Applications`, alongside 152 and 180.
+const ModernIosTouchIconSizes = [60, 76, 120, 152, 167];
 
 export const checkTouchIconTitle = async (
   baseUrl: string,
