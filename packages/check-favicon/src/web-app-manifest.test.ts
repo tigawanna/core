@@ -253,3 +253,37 @@ test('checkWebAppManifestFile - Everything is fine', async () => {
     },
   });
 });
+
+test('checkWebAppManifest - an unreadable icon is reported, not thrown', async () => {
+  const manifest = JSON.stringify({
+    name: 'The App',
+    short_name: 'App',
+    background_color: '#ffffff',
+    theme_color: '#000000',
+    icons: [{ src: '/icon-192.png', sizes: '192x192', type: 'image/png' }],
+  });
+
+  const root = parse(`<link rel="manifest" href="/site.webmanifest" />`);
+  const result = await checkWebAppManifest(
+    'https://example.com/',
+    root,
+    testFetcher({
+      'https://example.com/site.webmanifest': {
+        status: 200,
+        contentType: 'application/manifest+json',
+        readableStream: stringToReadableStream(manifest),
+      },
+      'https://example.com/icon-192.png': {
+        status: 200,
+        contentType: 'image/png',
+        readableStream: stringToReadableStream('this is definitely not an image'),
+      },
+    }),
+  );
+
+  const ids = result.messages.map(m => m.id);
+  expect(ids).toContain(MessageId.manifestIconDownloadable);
+  expect(ids).toContain(MessageId.manifestIconUnreadable);
+  expect(ids).not.toContain(MessageId.manifestIconRightSize);
+  expect(result.icon?.content).toBeNull();
+});

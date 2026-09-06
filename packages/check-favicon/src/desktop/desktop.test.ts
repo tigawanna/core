@@ -466,3 +466,91 @@ test('checkDesktopFavicon - ICO content is used as top-level icon when no PNG/SV
   expect(result.icon).toMatch(/^data:image\/(png|bmp);base64,/);
   expect(result.icon).toEqual(result.icons.ico?.content);
 });
+
+// A file that no decoder can read is one broken icon, not a broken check: the
+// desktop check used to throw out of `checkDesktopFavicon` — sharp and
+// decode-ico both throw on corrupt bytes — and take the formats that were fine
+// down with it.
+const corruptBytes = () => stringToReadableStream('this is definitely not an image');
+
+test('checkDesktopFavicon - a corrupt ICO does not hide the SVG and PNG favicons', async () => {
+  const root = parse(`
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+  `);
+
+  const result = await checkDesktopFavicon(
+    'https://example.com/',
+    root,
+    testFetcher({
+      'https://example.com/favicon.svg': {
+        status: 200,
+        contentType: 'image/svg+xml',
+        readableStream: await filePathToReadableStream('./fixtures/happy-face.svg'),
+      },
+      'https://example.com/favicon-96x96.png': {
+        status: 200,
+        contentType: 'image/png',
+        readableStream: await filePathToReadableStream('./fixtures/96x96.png'),
+      },
+      'https://example.com/favicon.ico': {
+        status: 200,
+        contentType: 'image/x-icon',
+        readableStream: corruptBytes(),
+      },
+    }),
+  );
+
+  const ids = result.messages.map(m => m.id);
+  expect(ids).toContain(MessageId.svgFaviconDownloadable);
+  expect(ids).toContain(MessageId.svgFaviconSquare);
+  expect(ids).toContain(MessageId.desktopPngFaviconRightSize);
+  expect(ids).toContain(MessageId.icoFaviconUnreadable);
+  expect(result.icons.svg?.content).not.toBeNull();
+  expect(result.icons.png?.content).not.toBeNull();
+  expect(result.icons.ico?.content).toBeNull();
+});
+
+test('checkSvgFavicon - a corrupt SVG is reported, not thrown', async () => {
+  const root = parse(`<link rel="icon" type="image/svg+xml" href="/favicon.svg" />`);
+
+  const result = await checkSvgFavicon(
+    'https://example.com/',
+    root,
+    testFetcher({
+      'https://example.com/favicon.svg': {
+        status: 200,
+        contentType: 'image/svg+xml',
+        readableStream: stringToReadableStream('<svg><unclosed'),
+      },
+    }),
+  );
+
+  const ids = result.messages.map(m => m.id);
+  expect(ids).toContain(MessageId.svgFaviconDownloadable);
+  expect(ids).toContain(MessageId.svgFaviconUnreadable);
+  expect(ids).not.toContain(MessageId.svgFaviconSquare);
+  expect(result.icon?.content).toBeNull();
+});
+
+test('checkPngFavicon - a corrupt PNG is reported, not thrown', async () => {
+  const root = parse(`<link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png" />`);
+
+  const result = await checkPngFavicon(
+    'https://example.com/',
+    root,
+    testFetcher({
+      'https://example.com/favicon-96x96.png': {
+        status: 200,
+        contentType: 'image/png',
+        readableStream: corruptBytes(),
+      },
+    }),
+  );
+
+  const ids = result.messages.map(m => m.id);
+  expect(ids).toContain(MessageId.desktopPngFaviconDownloadable);
+  expect(ids).toContain(MessageId.desktopPngFaviconUnreadable);
+  expect(result.icon?.content).toBeNull();
+});

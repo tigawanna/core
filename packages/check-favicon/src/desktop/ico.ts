@@ -1,6 +1,6 @@
 import { CheckedIcon, CheckerMessage, CheckerStatus, DesktopSingleReport, Fetcher, MessageId } from '../types';
 import { HTMLElement } from 'node-html-parser';
-import { bufferToDataUrl, mergeUrlAndPath, readableStreamToBuffer } from '../helper';
+import { bufferToDataUrl, decodingError, mergeUrlAndPath, readableStreamToBuffer } from '../helper';
 import { findIconDeclarations, resolveIconDeclarations } from './declarations';
 import decodeIco from 'decode-ico';
 import sharp from 'sharp';
@@ -141,37 +141,51 @@ export const checkIcoFavicon = async (
       });
 
       const iconBuffer = await readableStreamToBuffer(iconResponse.readableStream);
-      images = decodeIco(new Uint8Array(iconBuffer));
 
-      const imageSizes = images.map(image => `${image.width}x${image.height}`);
-
-      const expectedSizes = IcoFaviconSizes.map(size => `${size}x${size}`);
-
-      const extraSizes = imageSizes.filter(size => !expectedSizes.includes(size));
-      if (extraSizes.length > 0) {
+      // Truncated files, PNGs renamed to `.ico`, plain HTML error pages served
+      // with a 200: `decode-ico` throws on all of those. The file is the broken
+      // thing, not the check.
+      try {
+        images = decodeIco(new Uint8Array(iconBuffer));
+      } catch (error) {
         messages.push({
-          status: CheckerStatus.Warning,
-          id: MessageId.icoFaviconExtraSizes,
-          text: `Extra sizes found in ICO favicon: ${extraSizes.join(', ')}`,
+          status: CheckerStatus.Error,
+          id: MessageId.icoFaviconUnreadable,
+          text: `The ICO favicon at \`${iconUrl}\` cannot be read (${decodingError(error)})`,
         });
       }
+    }
+  }
 
-      const missingSizes = expectedSizes.filter(size => !imageSizes.includes(size));
-      if (missingSizes.length > 0) {
-        messages.push({
-          status: CheckerStatus.Warning,
-          id: MessageId.icoFaviconMissingSizes,
-          text: `Missing sizes in ICO favicon: ${missingSizes.join(', ')}`,
-        });
-      }
+  if (images) {
+    const imageSizes = images.map(image => `${image.width}x${image.height}`);
 
-      if (extraSizes.length === 0 && missingSizes.length === 0) {
-        messages.push({
-          status: CheckerStatus.Ok,
-          id: MessageId.icoFaviconExpectedSizes,
-          text: `The ICO favicon has the expected sizes (${imageSizes.join(', ')})`,
-        });
-      }
+    const expectedSizes = IcoFaviconSizes.map(size => `${size}x${size}`);
+
+    const extraSizes = imageSizes.filter(size => !expectedSizes.includes(size));
+    if (extraSizes.length > 0) {
+      messages.push({
+        status: CheckerStatus.Warning,
+        id: MessageId.icoFaviconExtraSizes,
+        text: `Extra sizes found in ICO favicon: ${extraSizes.join(', ')}`,
+      });
+    }
+
+    const missingSizes = expectedSizes.filter(size => !imageSizes.includes(size));
+    if (missingSizes.length > 0) {
+      messages.push({
+        status: CheckerStatus.Warning,
+        id: MessageId.icoFaviconMissingSizes,
+        text: `Missing sizes in ICO favicon: ${missingSizes.join(', ')}`,
+      });
+    }
+
+    if (extraSizes.length === 0 && missingSizes.length === 0) {
+      messages.push({
+        status: CheckerStatus.Ok,
+        id: MessageId.icoFaviconExpectedSizes,
+        text: `The ICO favicon has the expected sizes (${imageSizes.join(', ')})`,
+      });
     }
   }
 
@@ -181,11 +195,19 @@ export const checkIcoFavicon = async (
     width: null,
     height: null,
   };
-  if (images) {
+  if (images && images.length > 0) {
     const image = images[0];
-    theIcon.content = bufferToDataUrl(await icoImageToPng(image), 'image/png');
-    theIcon.width = image.width;
-    theIcon.height = image.height;
+    try {
+      theIcon.content = bufferToDataUrl(await icoImageToPng(image), 'image/png');
+      theIcon.width = image.width;
+      theIcon.height = image.height;
+    } catch (error) {
+      messages.push({
+        status: CheckerStatus.Error,
+        id: MessageId.icoFaviconUnreadable,
+        text: `The ICO favicon at \`${iconUrl}\` cannot be read (${decodingError(error)})`,
+      });
+    }
   }
 
   return {

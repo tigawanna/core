@@ -236,6 +236,13 @@ export const checkWebAppManifestFile = async (
             text: `The ${size}x${size} icon has no \`href\` attribute`,
           });
         },
+        unreadable: reason => {
+          messages.push({
+            status: CheckerStatus.Error,
+            id: MessageId.manifestIconUnreadable,
+            text: `The ${size}x${size} icon cannot be read (${reason})`,
+          });
+        },
         notSquare: () => {
           messages.push({
             status: CheckerStatus.Error,

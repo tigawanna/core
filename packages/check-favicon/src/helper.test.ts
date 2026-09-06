@@ -27,6 +27,9 @@ const getTestProcessor = () => {
     downloadable: () => {
       messages.push('downloadable');
     },
+    unreadable: (reason: string) => {
+      messages.push(`unreadable ${reason}`);
+    },
     square: (widthHeight: number) => {
       messages.push(`square ${widthHeight}`);
     },

@@ -26,6 +26,7 @@ export enum MessageId {
   svgFaviconDownloadable = 7,
   svgFaviconSquare = 8,
   svgFaviconNotSquare = 9,
+  svgFaviconUnreadable = 87,
 
   noIcoFavicon = 10,
   multipleIcoFavicons = 11,
@@ -39,6 +40,7 @@ export enum MessageId {
   icoFaviconExtraSizes = 18,
   icoFaviconMissingSizes = 19,
   icoFaviconExpectedSizes = 20,
+  icoFaviconUnreadable = 89,
 
   noDesktopPngFavicon = 21,
   no96x96DesktopPngFavicon = 22,
@@ -49,6 +51,7 @@ export enum MessageId {
   desktopPngFavicon404 = 27,
   desktopPngFaviconWrongSize = 28,
   desktopPngFaviconRightSize = 29,
+  desktopPngFaviconUnreadable = 88,
 
   noTouchWebAppTitle = 30,
   multipleTouchWebAppTitles = 31,
@@ -72,6 +75,7 @@ export enum MessageId {
   touchIconRedundantIosSize = 82,
   touchIconWrongSize = 45,
   touchIconTooBig = 83,
+  touchIconUnreadable = 90,
 
   noManifest = 46,
   noManifestHref = 47,
@@ -97,6 +101,7 @@ export enum MessageId {
   manifestIconRightSize = 67,
   manifestIconSquare = 68,
   manifestIconWrongSize = 69,
+  manifestIconUnreadable = 91,
 
   googleNoRobotsFile = 70,
   googleRobotsFileFound = 71,

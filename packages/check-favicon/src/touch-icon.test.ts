@@ -11,7 +11,7 @@ import {
   touchIconSizeVerdict,
 } from './touch-icon';
 import { testFetcher } from './test-helper';
-import { bufferToDataUrl, filePathToReadableStream, readableStreamToBuffer } from './helper';
+import { bufferToDataUrl, filePathToReadableStream, readableStreamToBuffer, stringToReadableStream } from './helper';
 import sharp from 'sharp';
 
 type TestOutput = {
@@ -854,4 +854,30 @@ test('selectTouchIcon', () => {
   // Ties go to the last declaration
   const otherBig = downloadedIcon('https://example.com/other-big.png', 512);
   expect(selectTouchIcon([big, otherBig])).toEqual(otherBig);
+});
+
+test('checkTouchIcon - an unreadable file is reported, not thrown', async () => {
+  await runCheckTouchIconTest(
+    `
+    <link rel="apple-touch-icon" sizes="180x180" href="icon.png">
+  `,
+    {
+      // The declaration claims 180x180 and the unreadable file contradicts
+      // nothing, so the broken file is the single thing to fix
+      messages: [ok(MessageId.touchIconDeclared), error(MessageId.touchIconUnreadable)],
+      icon: {
+        content: null,
+        url: 'https://example.com/icon.png',
+        width: null,
+        height: null,
+      },
+    },
+    {
+      'https://example.com/icon.png': {
+        status: 200,
+        contentType: 'image/png',
+        readableStream: stringToReadableStream('this is definitely not an image'),
+      },
+    },
+  );
 });

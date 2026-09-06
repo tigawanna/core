@@ -78,11 +78,15 @@ export type CheckIconProcessor = {
   icon404: () => void;
   cannotGet: (httpStatusCode: number) => void;
   downloadable: () => void;
+  /** The file was downloaded, but it is not an image anything can decode. */
+  unreadable: (reason: string) => void;
   square: (widthHeight: number) => void;
   notSquare: (width: number, Height: number) => void;
   rightSize: (widthHeight: number) => void;
   wrongSize: (widthHeight: number) => void;
 };
+
+export const decodingError = (error: unknown): string => (error instanceof Error ? error.message : String(error));
 
 export const pathToMimeType = (path: string): string => {
   const ext = path.split('.').pop();
@@ -129,7 +133,17 @@ export const checkIcon = async (
     processor.downloadable();
 
     const rawContent = await readableStreamToBuffer(res.readableStream);
-    const meta = await sharp(rawContent).metadata();
+
+    // A corrupt or truncated file makes sharp throw. That is one broken icon,
+    // not a broken check: report it and let the caller carry on with the other
+    // icons of the platform.
+    let meta;
+    try {
+      meta = await sharp(rawContent).metadata();
+    } catch (error) {
+      processor.unreadable(decodingError(error));
+      return { content: null, url: iconUrl, width: null, height: null };
+    }
 
     const contentType = res.contentType || pathToMimeType(iconUrl);
 

@@ -121,6 +121,8 @@ type TouchIconFetchOutcome =
   | { kind: 'cannotGet'; httpStatus: number }
   // 2xx with no body: `checkIcon` calls none of its callbacks
   | { kind: 'noBytes' }
+  /** Downloaded, but not an image anything can decode. */
+  | { kind: 'unreadable'; reason: string }
   | { kind: 'fetched' };
 
 type TouchIconFetch = {
@@ -149,6 +151,9 @@ const fetchTouchIcon = async (url: string, fetcher: Fetcher): Promise<TouchIconF
     },
     downloadable: () => {
       outcome = { kind: 'fetched' };
+    },
+    unreadable: reason => {
+      outcome = { kind: 'unreadable', reason };
     },
     // The size verdict is built from the returned dimensions, not from these.
     // `rightSize` and `wrongSize` are never called: no expected size is passed.
@@ -317,6 +322,15 @@ const declarationMessages = (icon: AnalyzedTouchIcon, isSelected: boolean): Chec
         status: CheckerStatus.Error,
         id: MessageId.touchIconCannotGet,
         text: `The touch icon \`${icon.url}\` cannot be fetched (${icon.outcome.httpStatus})`,
+      });
+
+      return messages;
+
+    case 'unreadable':
+      messages.push({
+        status: CheckerStatus.Error,
+        id: MessageId.touchIconUnreadable,
+        text: `The touch icon \`${icon.url}\` cannot be read (${icon.outcome.reason})`,
       });
 
       return messages;

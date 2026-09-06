@@ -5,6 +5,7 @@ import {
   CheckIconProcessor,
   bufferToDataUrl,
   checkIcon,
+  decodingError,
   fetchFetcher,
   mergeUrlAndPath,
   readableStreamToString,
@@ -117,22 +118,38 @@ export const checkSvgFaviconFile = async (
     });
 
     content = await readableStreamToString(res.readableStream);
-    const meta = await sharp(Buffer.from(content)).metadata();
-    width = meta.width || null;
-    height = meta.height || null;
 
-    if (width && height && width !== height) {
+    // An SVG that does not parse makes sharp throw. Report the file, do not
+    // take the whole desktop check down with it.
+    let meta;
+    try {
+      meta = await sharp(Buffer.from(content)).metadata();
+    } catch (error) {
       messages.push({
         status: CheckerStatus.Error,
-        id: MessageId.svgFaviconNotSquare,
-        text: `The SVG is not square (${width}x${height})`,
+        id: MessageId.svgFaviconUnreadable,
+        text: `The SVG favicon at \`${url}\` cannot be read (${decodingError(error)})`,
       });
-    } else {
-      messages.push({
-        status: CheckerStatus.Ok,
-        id: MessageId.svgFaviconSquare,
-        text: `The SVG is square (${width}x${height})`,
-      });
+      content = undefined;
+    }
+
+    if (meta) {
+      width = meta.width || null;
+      height = meta.height || null;
+
+      if (width && height && width !== height) {
+        messages.push({
+          status: CheckerStatus.Error,
+          id: MessageId.svgFaviconNotSquare,
+          text: `The SVG is not square (${width}x${height})`,
+        });
+      } else {
+        messages.push({
+          status: CheckerStatus.Ok,
+          id: MessageId.svgFaviconSquare,
+          text: `The SVG is square (${width}x${height})`,
+        });
+      }
     }
   }
 
@@ -217,6 +234,13 @@ export const checkPngFavicon = async (
               status: CheckerStatus.Error,
               id: MessageId.desktopPngFavicon404,
               text: `The ${size} desktop PNG favicon does not exist (404 error)`,
+            });
+          },
+          unreadable: reason => {
+            messages.push({
+              status: CheckerStatus.Error,
+              id: MessageId.desktopPngFaviconUnreadable,
+              text: `The ${size} desktop PNG favicon at \`${iconUrl}\` cannot be read (${reason})`,
             });
           },
           notSquare: (width, height) => {}, // Ignore this message
