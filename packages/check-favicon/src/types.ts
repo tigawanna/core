@@ -45,6 +45,7 @@ export enum MessageId {
   touchWebAppTitleDeclared,
   noTouchIcon,
   duplicatedTouchIconSizes,
+  // Never emitted, kept because removing it would renumber every id after it
   touchIconWithSize,
   touchIconDeclared,
   noTouchIconHref,
@@ -95,6 +96,13 @@ export enum MessageId {
   // every id after it.
   duplicatedIcoFaviconDeclarations,
   duplicatedSvgFaviconDeclarations,
+  multipleTouchIcons,
+  touchIconLegacyIosSize,
+  touchIconRedundantIosSize,
+  touchIconTooBig,
+  touchIconSizeMismatch,
+  touchIconNonSquareSizes,
+  noTouchIcon180x180,
 }
 
 export type CheckerMessage = {
