@@ -669,6 +669,44 @@ test('checkIcoFavicon - using type="image/x-icon"', async () => {
   );
 });
 
+// The markup of iana.org: `image/ico` is not a real MIME type, but browsers use the icon
+test('checkIcoFavicon - using the non-standard type="image/ico"', async () => {
+  const testIconPath = './fixtures/simple-ico.ico';
+
+  await runIcoTest(
+    `<link rel="shortcut icon" type="image/ico" href="/static/img/bookmark_icon.ico" />`,
+    {
+      messages: [
+        {
+          status: CheckerStatus.Ok,
+          id: MessageId.icoFaviconDeclared,
+        },
+        {
+          status: CheckerStatus.Ok,
+          id: MessageId.icoFaviconDownloadable,
+        },
+        {
+          status: CheckerStatus.Ok,
+          id: MessageId.icoFaviconExpectedSizes,
+        },
+      ],
+      icon: {
+        content: 'data:image/png;base64,placeholder', // Will be checked for format only
+        url: 'https://example.com/static/img/bookmark_icon.ico',
+        width: 48,
+        height: 48,
+      },
+    },
+    {
+      'https://example.com/static/img/bookmark_icon.ico': {
+        status: 200,
+        contentType: 'image/vnd.microsoft.icon',
+        readableStream: await filePathToReadableStream(testIconPath),
+      },
+    },
+  );
+});
+
 // For https://github.com/RealFaviconGenerator/core/issues/2
 test('checkIcoFavicon - Protocol-relative URL', async () => {
   const testIconPath = './fixtures/simple-ico.ico';

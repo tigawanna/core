@@ -3,14 +3,14 @@ import { mergeUrlAndPath } from '../helper';
 
 export type IconFormat = 'ico' | 'svg' | 'png';
 
-// The `type` attribute is only a hint, but when it is there it is authoritative.
+// The `type` attribute is only a hint, but when it names one of these it is authoritative.
 const formatMimeTypes: { [format in IconFormat]: string[] } = {
   ico: ['image/x-icon', 'image/vnd.microsoft.icon'],
   svg: ['image/svg+xml'],
   png: ['image/png'],
 };
 
-// Fallback when the declaration has no `type` attribute.
+// Fallback when the declaration has no `type` attribute, or one we do not know.
 const formatExtensions: { [format in IconFormat]: string[] } = {
   ico: ['ico'],
   svg: ['svg'],
@@ -44,14 +44,18 @@ const findFormat = (candidates: { [format in IconFormat]: string[] }, value: str
 /**
  * The format a `<link rel="icon">` markup declares, or null when it cannot be told.
  *
- * `type` is advisory in HTML, so it is used when present and the href extension is
- * the fallback otherwise. `<link rel="shortcut icon">` with neither is the legacy
- * Internet Explorer form, which could only ever be an ICO favicon.
+ * `type` is advisory in HTML, so it is used when it names a known format and the
+ * href extension is the fallback otherwise. An unknown type is a typo far more
+ * often than a format — `image/ico`, `images/x-icon`, even `shortcut icon` — and
+ * browsers do not skip an icon over it: Firefox, for one, ignores `type` and
+ * uses the file it downloads. `<link rel="shortcut icon">` with neither is the
+ * legacy Internet Explorer form, which could only ever be an ICO favicon.
  */
 export const iconMarkupFormat = (markup: HTMLElement): IconFormat | null => {
   const type = (markup.attributes.type || '').split(';')[0].trim().toLowerCase();
-  if (type) {
-    return findFormat(formatMimeTypes, type);
+  const typeFormat = type ? findFormat(formatMimeTypes, type) : null;
+  if (typeFormat) {
+    return typeFormat;
   }
 
   const extension = hrefExtension(markup.attributes.href);
