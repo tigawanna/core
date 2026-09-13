@@ -554,3 +554,59 @@ test('checkPngFavicon - a corrupt PNG is reported, not thrown', async () => {
   expect(ids).toContain(MessageId.desktopPngFaviconUnreadable);
   expect(result.icon?.content).toBeNull();
 });
+
+test('checkDesktopFavicon - relative hrefs under a <base href>', async () => {
+  const root = parse(`
+    <base href="https://cdn.example.net/site/v2/">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="96x96" href="../favicon-96x96.png">
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+  `);
+  const result = await checkDesktopFavicon(
+    'https://example.com/fr/',
+    root,
+    testFetcher({
+      'https://cdn.example.net/site/v2/favicon.svg': {
+        status: 200,
+        contentType: 'image/svg+xml',
+        readableStream: await filePathToReadableStream('./fixtures/happy-face.svg'),
+      },
+      'https://cdn.example.net/site/favicon-96x96.png': {
+        status: 200,
+        contentType: 'image/png',
+        readableStream: await filePathToReadableStream('./fixtures/96x96.png'),
+      },
+      'https://cdn.example.net/site/v2/favicon.ico': {
+        status: 200,
+        contentType: 'image/x-icon',
+        readableStream: await filePathToReadableStream('./fixtures/simple-ico.ico'),
+      },
+    }),
+  );
+
+  const ids = result.messages.map(m => m.id);
+  expect(ids).toContain(MessageId.svgFaviconDownloadable);
+  expect(ids).toContain(MessageId.desktopPngFaviconRightSize);
+  expect(ids).toContain(MessageId.icoFaviconDownloadable);
+  expect(result.icons.svg?.url).toEqual('https://cdn.example.net/site/v2/favicon.svg');
+  expect(result.icons.png?.url).toEqual('https://cdn.example.net/site/favicon-96x96.png');
+  expect(result.icons.ico?.url).toEqual('https://cdn.example.net/site/v2/favicon.ico');
+});
+
+// The implicit `/favicon.ico` belongs to the page's origin, not to the `<base>`
+test('checkDesktopFavicon - implicit /favicon.ico ignores <base href>', async () => {
+  const result = await checkDesktopFavicon(
+    'https://example.com/fr/',
+    parse(`<base href="https://cdn.example.net/site/"><title>Hey</title>`),
+    testFetcher({
+      'https://example.com/favicon.ico': {
+        status: 200,
+        contentType: 'image/x-icon',
+        readableStream: await filePathToReadableStream('./fixtures/simple-ico.ico'),
+      },
+    }),
+  );
+
+  expect(result.messages.map(m => m.id)).toContain(MessageId.icoFaviconImplicitInRoot);
+  expect(result.icons.ico?.url).toEqual('https://example.com/favicon.ico');
+});

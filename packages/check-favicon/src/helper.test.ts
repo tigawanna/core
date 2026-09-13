@@ -1,8 +1,10 @@
+import { parse } from 'node-html-parser';
 import sharp from 'sharp';
 import {
   CheckIconProcessor,
   bufferToDataUrl,
   checkIcon,
+  documentBaseUrl,
   filePathToDataUrl,
   filePathToReadableStream,
   filePathToString,
@@ -218,4 +220,23 @@ test('parseSizesAttribute', () => {
 
   expect(parseSizesAttribute('16x16')).toEqual(16);
   expect(parseSizesAttribute('50x170')).toEqual(null);
+});
+
+test('documentBaseUrl', () => {
+  const baseOf = (headFragment: string, pageUrl = 'https://www.icloud.com/') =>
+    documentBaseUrl(pageUrl, parse(headFragment));
+
+  expect(baseOf('<title>No base</title>')).toBe('https://www.icloud.com/');
+  expect(baseOf('<base href="/system/icloud.com/2630Build56/en-us/">')).toBe(
+    'https://www.icloud.com/system/icloud.com/2630Build56/en-us/',
+  );
+  // Relative to the page URL, not to the origin
+  expect(baseOf('<base href="assets/">', 'https://example.com/fr/index.html')).toBe('https://example.com/fr/assets/');
+  expect(baseOf('<base href="https://cdn.example.net/site/">')).toBe('https://cdn.example.net/site/');
+  // Only the first `<base>` with an href counts
+  expect(baseOf('<base target="_blank"><base href="/first/"><base href="/second/">')).toBe(
+    'https://www.icloud.com/first/',
+  );
+  expect(baseOf('<base href="  ">')).toBe('https://www.icloud.com/');
+  expect(baseOf('<base href="http://[invalid">')).toBe('https://www.icloud.com/');
 });

@@ -8,7 +8,14 @@ import {
   TouchIconTitleReport,
 } from './types';
 import { HTMLElement } from 'node-html-parser';
-import { CheckIconOutput, CheckIconProcessor, checkIcon, fetchFetcher, mergeUrlAndPath } from './helper';
+import {
+  CheckIconOutput,
+  CheckIconProcessor,
+  checkIcon,
+  documentBaseUrl,
+  fetchFetcher,
+  mergeUrlAndPath,
+} from './helper';
 import { IconDeclaration, resolveIconDeclarations } from './desktop/declarations';
 
 export const TouchIconFileSize = 180;
@@ -434,12 +441,13 @@ export const checkTouchIconIcon = async (
     });
   }
 
+  const documentUrl = documentBaseUrl(baseUrl, head);
   const declarations: IconDeclaration[] = iconMarkup.map(markup => {
     const href = markup.getAttribute('href') || null;
     return {
       markup,
       href,
-      url: href ? mergeUrlAndPath(baseUrl, href) : null,
+      url: href ? mergeUrlAndPath(documentUrl, href) : null,
     };
   });
 

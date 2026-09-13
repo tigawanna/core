@@ -6,6 +6,7 @@ import {
   bufferToDataUrl,
   checkIcon,
   decodingError,
+  documentBaseUrl,
   fetchFetcher,
   mergeUrlAndPath,
   readableStreamToString,
@@ -71,7 +72,7 @@ export const checkSvgFavicon = async (
         });
       }
 
-      const iconReport = await checkSvgFaviconFile(baseUrl, winner.href as string, fetcher);
+      const iconReport = await checkSvgFaviconFile(baseUrl, winner.url as string, fetcher);
       return {
         messages: [...messages, ...iconReport.messages],
         icon: iconReport.icon,
@@ -213,7 +214,7 @@ export const checkPngFavicon = async (
           text: `The ${size} desktop favicon markup has no href attribute`,
         });
       } else {
-        const iconUrl = mergeUrlAndPath(baseUrl, href);
+        const iconUrl = mergeUrlAndPath(documentBaseUrl(baseUrl, head), href);
         const processor: CheckIconProcessor = {
           cannotGet: httpStatus => {
             messages.push({

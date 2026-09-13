@@ -321,3 +321,36 @@ test('checkWebAppManifest - icon path relative to a manifest in a subdirectory',
   expect(ids).not.toContain(MessageId.manifestIcon404);
   expect(result.icon?.url).toEqual('https://example.com/assets/favicons/icon-192.png');
 });
+
+test('checkWebAppManifest - manifest href under a <base href>', async () => {
+  const manifest = JSON.stringify({
+    name: 'The App',
+    short_name: 'App',
+    background_color: '#ffffff',
+    theme_color: '#000000',
+    icons: [{ src: 'icon-192.png', sizes: '192x192', type: 'image/png' }],
+  });
+
+  const root = parse(`<base href="/static/v3/"><link rel="manifest" href="site.webmanifest" />`);
+  const result = await checkWebAppManifest(
+    'https://example.com/',
+    root,
+    testFetcher({
+      'https://example.com/static/v3/site.webmanifest': {
+        status: 200,
+        contentType: 'application/manifest+json',
+        readableStream: stringToReadableStream(manifest),
+      },
+      'https://example.com/static/v3/icon-192.png': {
+        status: 200,
+        contentType: 'image/png',
+        readableStream: await filePathToReadableStream(testIcon192),
+      },
+    }),
+  );
+
+  const ids = result.messages.map(m => m.id);
+  expect(ids).not.toContain(MessageId.manifest404);
+  expect(ids).toContain(MessageId.manifestIconDownloadable);
+  expect(result.icon?.url).toEqual('https://example.com/static/v3/icon-192.png');
+});

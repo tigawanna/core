@@ -1,5 +1,6 @@
 import fs from 'fs/promises';
 import path from 'path';
+import { HTMLElement } from 'node-html-parser';
 import { CheckerStatus, FaviconReport, Fetcher } from './types';
 import sharp, { FormatEnum } from 'sharp';
 
@@ -190,6 +191,26 @@ export const mergeUrlAndPath = (baseUrl: string, absoluteOrRelativePath: string)
   } catch (error) {
     // Unparsable path: let the fetch fail on it
     return absoluteOrRelativePath;
+  }
+};
+
+/**
+ * The URL the relative links of a page resolve against: the page URL, unless the
+ * document has a `<base href>`. As in browsers, only the first `<base>` with an
+ * `href` counts, and that `href` is itself resolved against the page URL.
+ */
+export const documentBaseUrl = (pageUrl: string, head: HTMLElement): string => {
+  const base = head.querySelectorAll('base').find(element => element.hasAttribute('href'));
+  const href = base?.getAttribute('href')?.trim();
+  if (!href) {
+    return pageUrl;
+  }
+
+  try {
+    return new URL(href, pageUrl).href;
+  } catch (error) {
+    // An invalid `<base href>` is ignored
+    return pageUrl;
   }
 };
 

@@ -888,3 +888,21 @@ test('checkTouchIcon - an unreadable file is reported, not thrown', async () => 
     },
   );
 });
+
+// The markup of icloud.com: without the `<base>`, the icon resolves to a 404
+test('checkTouchIcon - Relative href under a <base href>', async () => {
+  const root = parse(`
+    <base href="/system/icloud.com/2630Build56/en-us/">
+    <link rel="apple-touch-icon" sizes="180x180" href="../favicons/default-favicon-light-180x180.png">
+  `);
+  const iconUrl = 'https://www.icloud.com/system/icloud.com/2630Build56/favicons/default-favicon-light-180x180.png';
+  const result = await checkTouchIconIcon(
+    'https://www.icloud.com/',
+    root,
+    testFetcher({ [iconUrl]: pngResponse(await pngOfSize(180)) }),
+  );
+
+  expect(result.messages.map(m => m.id)).not.toContain(MessageId.touchIcon404);
+  expect(result.messages.map(m => m.id)).toContain(MessageId.touchIcon180x180);
+  expect(result.icon?.url).toEqual(iconUrl);
+});

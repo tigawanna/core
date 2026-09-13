@@ -4,6 +4,7 @@ import {
   CheckIconOutput,
   CheckIconProcessor,
   checkIcon,
+  documentBaseUrl,
   fetchFetcher,
   mergeUrlAndPath,
   pathToMimeType,
@@ -53,7 +54,7 @@ export const checkWebAppManifest = async (
     return { messages, name, shortName, backgroundColor, themeColor, icon };
   }
 
-  const manifestUrl = mergeUrlAndPath(baseUrl, href);
+  const manifestUrl = mergeUrlAndPath(documentBaseUrl(baseUrl, head), href);
 
   const manifest = await fetcher(manifestUrl, 'application/json');
 

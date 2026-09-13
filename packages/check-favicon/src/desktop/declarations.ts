@@ -1,5 +1,5 @@
 import { HTMLElement } from 'node-html-parser';
-import { mergeUrlAndPath } from '../helper';
+import { documentBaseUrl, mergeUrlAndPath } from '../helper';
 
 export type IconFormat = 'ico' | 'svg' | 'png';
 
@@ -73,15 +73,16 @@ export const iconMarkupFormat = (markup: HTMLElement): IconFormat | null => {
 export type IconDeclaration = {
   markup: HTMLElement;
   href: string | null;
-  // The href resolved against the page URL, null when there is no href
+  // The href resolved against the document base URL, null when there is no href
   url: string | null;
 };
 
 /**
  * All the favicon declarations of the given format, in document order.
  */
-export const findIconDeclarations = (baseUrl: string, head: HTMLElement, format: IconFormat): IconDeclaration[] =>
-  head
+export const findIconDeclarations = (baseUrl: string, head: HTMLElement, format: IconFormat): IconDeclaration[] => {
+  const documentUrl = documentBaseUrl(baseUrl, head);
+  return head
     .querySelectorAll('link')
     .filter(markup => relTokens(markup).includes('icon'))
     .filter(markup => iconMarkupFormat(markup) === format)
@@ -90,9 +91,10 @@ export const findIconDeclarations = (baseUrl: string, head: HTMLElement, format:
       return {
         markup,
         href,
-        url: href ? mergeUrlAndPath(baseUrl, href) : null,
+        url: href ? mergeUrlAndPath(documentUrl, href) : null,
       };
     });
+};
 
 export type ResolvedIconDeclarations = {
   // The declarations that do have an href

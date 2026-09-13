@@ -108,7 +108,8 @@ export const checkIcoFavicon = async (
       iconUrl = winner.url;
     }
   } else {
-    // No declared ICO favicon, try the implicit /favicon.ico convention
+    // No declared ICO favicon, try the implicit /favicon.ico convention. It
+    // belongs to the page's own origin, whatever `<base href>` says.
     iconUrl = mergeUrlAndPath(url, '/favicon.ico');
   }
 
