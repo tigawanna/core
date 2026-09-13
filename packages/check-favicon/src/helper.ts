@@ -181,23 +181,15 @@ export const checkIcon = async (
   };
 };
 
+// Resolves the path the way browsers do: a relative path is relative to the
+// "directory" of the base URL, so `icon.png` against `https://example.com/assets/site.webmanifest`
+// is `https://example.com/assets/icon.png`, and the query string of the base URL is dropped.
 export const mergeUrlAndPath = (baseUrl: string, absoluteOrRelativePath: string): string => {
-  // If the path is a full URL, return it as is
-  if (absoluteOrRelativePath.startsWith('http://') || absoluteOrRelativePath.startsWith('https://')) {
+  try {
+    return new URL(absoluteOrRelativePath, baseUrl).href;
+  } catch (error) {
+    // Unparsable path: let the fetch fail on it
     return absoluteOrRelativePath;
-  }
-
-  const url = new URL(baseUrl);
-
-  // Protocol-relative URL
-  if (absoluteOrRelativePath.startsWith('//')) {
-    return `${url.protocol}${absoluteOrRelativePath}`;
-  } else if (absoluteOrRelativePath.startsWith('/')) {
-    // If the path starts with a slash, replace the pathname
-    return `${url.origin}${absoluteOrRelativePath}`;
-  } else {
-    // Otherwise, append the path to the existing pathname
-    return `${url.href}${url.href.endsWith('/') ? '' : '/'}${absoluteOrRelativePath}`;
   }
 };
 

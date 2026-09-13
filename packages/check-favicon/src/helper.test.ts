@@ -183,7 +183,22 @@ test('mergeUrlAndPath', () => {
   );
 
   expect(mergeUrlAndPath('https://example.com/sub-page', '/some-path')).toBe('https://example.com/some-path');
-  expect(mergeUrlAndPath('https://example.com/sub-page', 'some/path')).toBe('https://example.com/sub-page/some/path');
+  // A relative path is relative to the "directory" of the base URL, not to the base URL itself
+  expect(mergeUrlAndPath('https://example.com/sub-page', 'some/path')).toBe('https://example.com/some/path');
+  expect(mergeUrlAndPath('https://example.com/sub-page/', 'some/path')).toBe('https://example.com/sub-page/some/path');
+  expect(
+    mergeUrlAndPath('https://www.nasa.gov/wp-content/favicons/site.webmanifest', 'android-chrome-192x192.png'),
+  ).toBe('https://www.nasa.gov/wp-content/favicons/android-chrome-192x192.png');
+  expect(mergeUrlAndPath('https://example.com/assets/icons/site.webmanifest', '../icon.png')).toBe(
+    'https://example.com/assets/icon.png',
+  );
+  expect(mergeUrlAndPath('https://example.com/assets/site.webmanifest', './icon.png')).toBe(
+    'https://example.com/assets/icon.png',
+  );
+
+  // The query string and the fragment of the base URL are not part of the result
+  expect(mergeUrlAndPath('https://example.com/?from=home#top', 'favicon.png')).toBe('https://example.com/favicon.png');
+  expect(mergeUrlAndPath('https://example.com/?from=home', '/favicon.png')).toBe('https://example.com/favicon.png');
 
   expect(mergeUrlAndPath('https://example.com', 'https://elsewhere.com/some-path')).toBe(
     'https://elsewhere.com/some-path',

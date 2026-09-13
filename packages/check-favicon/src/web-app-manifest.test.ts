@@ -287,3 +287,37 @@ test('checkWebAppManifest - an unreadable icon is reported, not thrown', async (
   expect(ids).not.toContain(MessageId.manifestIconRightSize);
   expect(result.icon?.content).toBeNull();
 });
+
+// A relative icon path is relative to the manifest, not to the page
+test('checkWebAppManifest - icon path relative to a manifest in a subdirectory', async () => {
+  const manifest = JSON.stringify({
+    name: 'The App',
+    short_name: 'App',
+    background_color: '#ffffff',
+    theme_color: '#000000',
+    icons: [{ src: 'icon-192.png', sizes: '192x192', type: 'image/png' }],
+  });
+
+  const root = parse(`<link rel="manifest" href="/assets/favicons/site.webmanifest" />`);
+  const result = await checkWebAppManifest(
+    'https://example.com/some-page?from=home',
+    root,
+    testFetcher({
+      'https://example.com/assets/favicons/site.webmanifest': {
+        status: 200,
+        contentType: 'application/manifest+json',
+        readableStream: stringToReadableStream(manifest),
+      },
+      'https://example.com/assets/favicons/icon-192.png': {
+        status: 200,
+        contentType: 'image/png',
+        readableStream: await filePathToReadableStream(testIcon192),
+      },
+    }),
+  );
+
+  const ids = result.messages.map(m => m.id);
+  expect(ids).toContain(MessageId.manifestIconDownloadable);
+  expect(ids).not.toContain(MessageId.manifestIcon404);
+  expect(result.icon?.url).toEqual('https://example.com/assets/favicons/icon-192.png');
+});
