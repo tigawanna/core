@@ -7,7 +7,7 @@ import {
   TouchIconReport,
   TouchIconTitleReport,
 } from './types';
-import { HTMLElement } from 'node-html-parser';
+import { HTMLElement, parse } from 'node-html-parser';
 import {
   CheckIconOutput,
   CheckIconProcessor,
@@ -15,8 +15,10 @@ import {
   documentBaseUrl,
   fetchFetcher,
   mergeUrlAndPath,
+  readableStreamToBuffer,
 } from './helper';
 import { IconDeclaration, resolveIconDeclarations } from './desktop/declarations';
+import { isHtmlDocument } from './desktop/ico';
 
 export const TouchIconFileSize = 180;
 
@@ -175,6 +177,56 @@ const fetchTouchIcon = async (url: string, fetcher: Fetcher): Promise<TouchIconF
   const output = await checkIcon(url, processor, fetcher, undefined);
 
   return { outcome, output };
+};
+
+/**
+ * Where iOS looks for a touch icon when the page declares none, in the order it
+ * tries them — the touch icon counterpart of `/favicon.ico`. Like it, they live
+ * at the root of the page's own origin, whatever `<base href>` says.
+ */
+export const ImplicitTouchIconPaths = ['/apple-touch-icon-precomposed.png', '/apple-touch-icon.png'];
+
+type ImplicitTouchIcon = {
+  declaration: IconDeclaration;
+  fetch: TouchIconFetch;
+};
+
+const findImplicitTouchIcon = async (pageUrl: string, fetcher: Fetcher): Promise<ImplicitTouchIcon | null> => {
+  for (const path of ImplicitTouchIconPaths) {
+    const url = mergeUrlAndPath(pageUrl, path);
+    const response = await fetcher(url, 'image/png');
+    if (response.status >= 300 || !response.readableStream) {
+      continue;
+    }
+
+    // A server that answers every URL with a page is not serving a touch icon
+    const buffer = await readableStreamToBuffer(response.readableStream);
+    if (isHtmlDocument(buffer, response.contentType)) {
+      continue;
+    }
+
+    // The bytes are already here: replay them instead of downloading them again
+    const replay: Fetcher = async () => ({
+      ...response,
+      readableStream: new ReadableStream({
+        start(controller) {
+          controller.enqueue(new Uint8Array(buffer));
+          controller.close();
+        },
+      }),
+    });
+
+    return {
+      declaration: {
+        markup: parse(`<link rel="apple-touch-icon" href="${path}">`).querySelector('link') as HTMLElement,
+        href: path,
+        url,
+      },
+      fetch: await fetchTouchIcon(url, replay),
+    };
+  }
+
+  return null;
 };
 
 export type AnalyzedTouchIcon = {
@@ -408,55 +460,71 @@ export const checkTouchIconIcon = async (
   }
 
   const iconMarkup = head.querySelectorAll("link[rel='apple-touch-icon']");
+  let declarations: IconDeclaration[];
+  const fetched = new Map<string, TouchIconFetch>();
+
   if (iconMarkup.length === 0) {
-    messages.push({
-      status: CheckerStatus.Error,
-      id: MessageId.noTouchIcon,
-      text: 'No touch icon declared',
-    });
+    const implicit = await findImplicitTouchIcon(baseUrl, fetcher);
+    if (!implicit) {
+      messages.push({
+        status: CheckerStatus.Error,
+        id: MessageId.noTouchIcon,
+        text: `No touch icon declared, and none at ${ImplicitTouchIconPaths.join(' or ')}`,
+      });
 
-    return { messages, icon: null };
-  }
+      return { messages, icon: null };
+    }
 
-  messages.push({
-    status: CheckerStatus.Ok,
-    id: MessageId.touchIconDeclared,
-    text: 'The touch icon is declared',
-  });
-
-  const duplicatedSizes = getDuplicatedSizes(iconMarkup.map(icon => icon.getAttribute('sizes')));
-  if (duplicatedSizes.length > 0) {
-    messages.push({
-      status: CheckerStatus.Error,
-      id: MessageId.duplicatedTouchIconSizes,
-      text: `The touch icon sizes ${duplicatedSizes.map(s => s || '(no size)').join(', ')} are declared more than once`,
-    });
-  }
-
-  if (iconMarkup.length > 1) {
+    // Allowed, but only iOS is known to look there: the other clients that want a
+    // big icon — bookmark managers, link previews, launchers — read the markup.
     messages.push({
       status: CheckerStatus.Warning,
-      id: MessageId.multipleTouchIcons,
-      text: `There are ${iconMarkup.length} touch icon declarations. Nowadays a single 180x180 touch icon is enough.`,
+      id: MessageId.touchIconImplicitInRoot,
+      text: `The touch icon is not declared, but found at ${implicit.declaration.href}. Declare it: not every client looks there.`,
     });
-  }
 
-  const documentUrl = documentBaseUrl(baseUrl, head);
-  const declarations: IconDeclaration[] = iconMarkup.map(markup => {
-    const href = markup.getAttribute('href') || null;
-    return {
-      markup,
-      href,
-      url: href ? mergeUrlAndPath(documentUrl, href) : null,
-    };
-  });
+    declarations = [implicit.declaration];
+    fetched.set(implicit.declaration.url as string, implicit.fetch);
+  } else {
+    messages.push({
+      status: CheckerStatus.Ok,
+      id: MessageId.touchIconDeclared,
+      text: 'The touch icon is declared',
+    });
 
-  // The same file declared twice is a single download. `winner` is not used:
-  // touch icons are picked by size, not by document order.
-  const { distinctUrls } = resolveIconDeclarations(declarations);
-  const fetched = new Map<string, TouchIconFetch>();
-  for (const url of distinctUrls) {
-    fetched.set(url, await fetchTouchIcon(url, fetcher));
+    const duplicatedSizes = getDuplicatedSizes(iconMarkup.map(icon => icon.getAttribute('sizes')));
+    if (duplicatedSizes.length > 0) {
+      messages.push({
+        status: CheckerStatus.Error,
+        id: MessageId.duplicatedTouchIconSizes,
+        text: `The touch icon sizes ${duplicatedSizes.map(s => s || '(no size)').join(', ')} are declared more than once`,
+      });
+    }
+
+    if (iconMarkup.length > 1) {
+      messages.push({
+        status: CheckerStatus.Warning,
+        id: MessageId.multipleTouchIcons,
+        text: `There are ${iconMarkup.length} touch icon declarations. Nowadays a single 180x180 touch icon is enough.`,
+      });
+    }
+
+    const documentUrl = documentBaseUrl(baseUrl, head);
+    declarations = iconMarkup.map(markup => {
+      const href = markup.getAttribute('href') || null;
+      return {
+        markup,
+        href,
+        url: href ? mergeUrlAndPath(documentUrl, href) : null,
+      };
+    });
+
+    // The same file declared twice is a single download. `winner` is not used:
+    // touch icons are picked by size, not by document order.
+    const { distinctUrls } = resolveIconDeclarations(declarations);
+    for (const url of distinctUrls) {
+      fetched.set(url, await fetchTouchIcon(url, fetcher));
+    }
   }
 
   const icons = declarations.map(declaration => analyzeTouchIcon(declaration, fetched));

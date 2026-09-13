@@ -62,6 +62,7 @@ export enum MessageId {
   multipleTouchIcons = 80,
   duplicatedTouchIconSizes = 35,
   touchIconDeclared = 37,
+  touchIconImplicitInRoot = 93,
   noTouchIconHref = 38,
   touchIcon404 = 39,
   touchIconCannotGet = 40,

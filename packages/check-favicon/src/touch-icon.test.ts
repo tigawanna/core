@@ -906,3 +906,102 @@ test('checkTouchIcon - Relative href under a <base href>', async () => {
   expect(result.messages.map(m => m.id)).toContain(MessageId.touchIcon180x180);
   expect(result.icon?.url).toEqual(iconUrl);
 });
+
+// No declaration: iOS looks at the root of the site, like browsers do for /favicon.ico
+test('checkTouchIcon - Implicit /apple-touch-icon.png', async () => {
+  const icon = await pngOfSize(180);
+  await runCheckTouchIconTest(
+    `<title>No touch icon declared</title>`,
+    {
+      messages: [
+        warning(MessageId.touchIconImplicitInRoot),
+        ok(MessageId.touchIconDownloadable),
+        ok(MessageId.touchIconSquare),
+        ok(MessageId.touchIcon180x180),
+      ],
+      icon: expectedIcon(icon, 'https://example.com/apple-touch-icon.png', 180),
+    },
+    { 'https://example.com/apple-touch-icon.png': pngResponse(icon) },
+  );
+});
+
+test('checkTouchIcon - Implicit icon, precomposed first, as iOS does', async () => {
+  const precomposed = await pngOfSize(180);
+  const result = await checkTouchIconIcon(
+    'https://example.com/',
+    parse(`<title>No touch icon declared</title>`),
+    testFetcher({
+      'https://example.com/apple-touch-icon-precomposed.png': pngResponse(precomposed),
+      'https://example.com/apple-touch-icon.png': pngResponse(await pngOfSize(152)),
+    }),
+  );
+
+  expect(result.icon?.url).toEqual('https://example.com/apple-touch-icon-precomposed.png');
+  expect(result.icon?.width).toEqual(180);
+});
+
+// The apple.com case: a 152x152 icon at the root, nothing declared
+test('checkTouchIcon - Implicit icon of the wrong size', async () => {
+  const result = await checkTouchIconIcon(
+    'https://example.com/',
+    parse(`<title>No touch icon declared</title>`),
+    testFetcher({ 'https://example.com/apple-touch-icon.png': pngResponse(await pngOfSize(152)) }),
+  );
+
+  const ids = result.messages.map(m => m.id);
+  expect(ids[0]).toEqual(MessageId.touchIconImplicitInRoot);
+  expect(ids).toContain(MessageId.noTouchIcon180x180);
+  expect(ids).not.toContain(MessageId.noTouchIcon);
+  expect(result.icon?.width).toEqual(152);
+});
+
+test('checkTouchIcon - A web page at /apple-touch-icon.png is no touch icon', async () => {
+  await runCheckTouchIconTest(
+    `<title>No touch icon declared</title>`,
+    { messages: [error(MessageId.noTouchIcon)] },
+    {
+      'https://example.com/apple-touch-icon-precomposed.png': {
+        status: 200,
+        contentType: 'text/html',
+        readableStream: stringToReadableStream('<!DOCTYPE html><html><head><title>Home</title></head></html>'),
+      },
+      'https://example.com/apple-touch-icon.png': {
+        status: 200,
+        contentType: 'text/html',
+        readableStream: stringToReadableStream('<!DOCTYPE html><html><head><title>Home</title></head></html>'),
+      },
+    },
+  );
+});
+
+test('checkTouchIcon - The root is only searched when nothing is declared', async () => {
+  const requested: string[] = [];
+  const database = { 'https://example.com/icon.png': pngResponse(await pngOfSize(180)) };
+  await checkTouchIconIcon(
+    'https://example.com/',
+    parse(`<link rel="apple-touch-icon" href="/icon.png">`),
+    (url, type) => {
+      requested.push(url);
+      return testFetcher(database)(url, type);
+    },
+  );
+
+  expect(requested).toEqual(['https://example.com/icon.png']);
+});
+
+test('checkTouchIcon - The implicit icon belongs to the page origin, not to <base href>', async () => {
+  const requested: string[] = [];
+  await checkTouchIconIcon(
+    'https://example.com/fr/',
+    parse(`<base href="https://cdn.example.net/site/"><title>Hey</title>`),
+    (url, type) => {
+      requested.push(url);
+      return testFetcher({})(url, type);
+    },
+  );
+
+  expect(requested).toEqual([
+    'https://example.com/apple-touch-icon-precomposed.png',
+    'https://example.com/apple-touch-icon.png',
+  ]);
+});
