@@ -1,4 +1,10 @@
-import { checkGoogleFaviconFromDesktopReport, checkRobotsFile, getRobotsFileUrl, RobotsIcon } from './google';
+import {
+  checkGoogleFaviconFromDesktopReport,
+  checkRobotsFile,
+  getGoogleImageBotUserAgent,
+  getRobotsFileUrl,
+  RobotsIcon,
+} from './google';
 import { stringToReadableStream } from './helper';
 import { testFetcher } from './test-helper';
 import {
@@ -293,6 +299,96 @@ test('checkRobotsFile - Icons sharing an origin trigger a single robots file fet
 
   // One fetch for the page origin, one for the CDN origin shared by two icons
   expect(fetchedUrls).toEqual([pageRobotsUrl, cdnRobotsUrl]);
+});
+
+test('getGoogleImageBotUserAgent', () => {
+  expect(getGoogleImageBotUserAgent('')).toEqual('Googlebot-Image');
+  expect(getGoogleImageBotUserAgent('User-agent: *\nDisallow: /')).toEqual('Googlebot-Image');
+  expect(getGoogleImageBotUserAgent('User-agent: Googlebot\nAllow: /')).toEqual('Googlebot');
+  expect(getGoogleImageBotUserAgent('user-agent : googlebot/2.1\nAllow: /')).toEqual('Googlebot');
+  expect(getGoogleImageBotUserAgent('User-agent: Googlebot\nUser-agent: Googlebot-Image\nAllow: /')).toEqual(
+    'Googlebot-Image',
+  );
+  expect(getGoogleImageBotUserAgent('User-agent: Googlebot-News\nAllow: /')).toEqual('Googlebot-Image');
+  expect(getGoogleImageBotUserAgent('# User-agent: Googlebot\nUser-agent: *\nAllow: /')).toEqual('Googlebot-Image');
+});
+
+// Googlebot-Image obeys the `Googlebot` group when there is no `Googlebot-Image` group
+test('checkRobotsFile - Icon allowed by the Googlebot group, even if blocked for everyone else', async () => {
+  await runRobotsTest(
+    [{ url: 'https://example.com/favicon.png', type: 'png' }],
+    {
+      [pageRobotsUrl]: `
+User-agent: Googlebot
+Allow: /
+
+User-agent: *
+Disallow: /
+`,
+    },
+    [
+      {
+        status: CheckerStatus.Ok,
+        id: MessageId.googleRobotsFileFound,
+      },
+      {
+        status: CheckerStatus.Ok,
+        id: MessageId.googlePngIconAllowedByRobots,
+      },
+    ],
+  );
+});
+
+test('checkRobotsFile - Icon blocked by the Googlebot group, even if allowed for everyone else', async () => {
+  const { messages } = await runRobotsTest(
+    [{ url: 'https://example.com/favicon.png', type: 'png' }],
+    {
+      [pageRobotsUrl]: `
+User-agent: *
+Allow: /
+
+User-agent: Googlebot
+Disallow: /
+`,
+    },
+    [
+      {
+        status: CheckerStatus.Ok,
+        id: MessageId.googleRobotsFileFound,
+      },
+      {
+        status: CheckerStatus.Error,
+        id: MessageId.googlePngIconBlockedByRobots,
+      },
+    ],
+  );
+
+  expect(getLineNumber(messages[1])).toEqual(6);
+});
+
+test('checkRobotsFile - The Googlebot-Image group takes precedence over the Googlebot group', async () => {
+  await runRobotsTest(
+    [{ url: 'https://example.com/favicon.png', type: 'png' }],
+    {
+      [pageRobotsUrl]: `
+User-agent: Googlebot
+Disallow: /
+
+User-agent: Googlebot-Image
+Allow: /
+`,
+    },
+    [
+      {
+        status: CheckerStatus.Ok,
+        id: MessageId.googleRobotsFileFound,
+      },
+      {
+        status: CheckerStatus.Ok,
+        id: MessageId.googlePngIconAllowedByRobots,
+      },
+    ],
+  );
 });
 
 const checkedIcon = (url: string): CheckedIcon => ({

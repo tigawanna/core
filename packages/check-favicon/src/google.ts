@@ -24,6 +24,12 @@ export type RobotsIcon = {
 
 type Robots = ReturnType<typeof robotsParser>;
 
+type RobotsFile = {
+  parser: Robots;
+  // The user agent whose rules apply to `Googlebot-Image` in this file
+  userAgent: string;
+};
+
 const robotsMessageIds: { [type in RobotsIconType]: { allowed: MessageId; blocked: MessageId } } = {
   png: {
     allowed: MessageId.googlePngIconAllowedByRobots,
@@ -57,8 +63,26 @@ const getOrigin = (url: string): string | null => {
   }
 };
 
+// `Googlebot-Image` has two user agent tokens, `Googlebot-Image` and `Googlebot`, and obeys
+// the most specific group: its own, else the one of `Googlebot`, else `*`.
+// See https://developers.google.com/search/docs/crawling-indexing/google-common-crawlers
+// robots-parser only falls back to `*`, so the token is picked here.
+export const getGoogleImageBotUserAgent = (robotsFile: string): string => {
+  const userAgents = robotsFile
+    .split(/\r\n|\r|\n/)
+    .map(line => line.replace(/#.*/, '').match(/^\s*user-agent\s*:\s*([^/]*)/i))
+    .filter((match): match is RegExpMatchArray => !!match)
+    .map(match => match[1].trim().toLowerCase());
+
+  if (!userAgents.includes(GoogleImageBot.toLowerCase()) && userAgents.includes(GoogleBot.toLowerCase())) {
+    return GoogleBot;
+  }
+
+  return GoogleImageBot;
+};
+
 // Returns null when the origin has no robots.txt file, which means everything is allowed.
-const fetchRobotsFile = async (robotsUrl: string, fetcher: Fetcher): Promise<Robots | null> => {
+const fetchRobotsFile = async (robotsUrl: string, fetcher: Fetcher): Promise<RobotsFile | null> => {
   const robotsResponse = await fetcher(robotsUrl);
 
   if (robotsResponse.status !== 200) {
@@ -67,7 +91,10 @@ const fetchRobotsFile = async (robotsUrl: string, fetcher: Fetcher): Promise<Rob
 
   const robotsFile = robotsResponse.readableStream ? await readableStreamToString(robotsResponse.readableStream) : '';
 
-  return robotsParser(robotsUrl, robotsFile);
+  return {
+    parser: robotsParser(robotsUrl, robotsFile),
+    userAgent: getGoogleImageBotUserAgent(robotsFile),
+  };
 };
 
 export const checkRobotsFile = async (
@@ -98,7 +125,7 @@ export const checkRobotsFile = async (
   // `Googlebot-Image` obeys the robots.txt file of the CDN, not the one of the page.
   // So each icon is checked against the robots.txt file of its own origin, with one
   // fetch per distinct origin.
-  const robotsByOrigin = new Map<string, { robots: Robots | null; url: string }>();
+  const robotsByOrigin = new Map<string, { robots: RobotsFile | null; url: string }>();
 
   const pageOrigin = getOrigin(baseUrl);
   if (pageOrigin) {
@@ -125,14 +152,14 @@ export const checkRobotsFile = async (
     // `isAllowed()` returns undefined when it cannot decide, typically when the URL
     // does not belong to the origin of the robots.txt file. Only an explicit false
     // means the icon is actually blocked.
-    if (!robots || robots.isAllowed(icon.url, GoogleImageBot) !== false) {
+    if (!robots || robots.parser.isAllowed(icon.url, robots.userAgent) !== false) {
       messages.push({
         status: CheckerStatus.Ok,
         text: `Access to \`${icon.url}\` is allowed for \`${GoogleImageBot}\``,
         id: ids.allowed,
       });
     } else {
-      const line = robots.getMatchingLineNumber(icon.url, GoogleImageBot);
+      const line = robots.parser.getMatchingLineNumber(icon.url, robots.userAgent);
       messages.push({
         status: CheckerStatus.Error,
         text: `Access to \`${icon.url}\` is blocked for \`${GoogleImageBot}\` (\`${entry?.url}\`, line ${line})`,
