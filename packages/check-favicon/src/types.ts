@@ -41,6 +41,7 @@ export enum MessageId {
   icoFaviconMissingSizes = 19,
   icoFaviconExpectedSizes = 20,
   icoFaviconUnreadable = 89,
+  icoFaviconIsHtml = 92,
 
   noDesktopPngFavicon = 21,
   no96x96DesktopPngFavicon = 22,

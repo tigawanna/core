@@ -27,6 +27,28 @@ const icoImageToPng = async (image: IcoImage): Promise<Buffer> => {
     .toBuffer();
 };
 
+/**
+ * Servers that answer every URL with a page — a single-page app fallback, a geo
+ * wall, a soft 404 — serve HTML at `/favicon.ico` with a 200. The browser gets
+ * no icon out of it.
+ */
+export const isHtmlDocument = (buffer: Buffer, contentType: string | null): boolean => {
+  const start = buffer
+    .subarray(0, 512)
+    .toString('utf8')
+    .replace(/^\uFEFF/, '')
+    .trimStart()
+    .toLowerCase();
+
+  if (start.startsWith('<!doctype html') || start.startsWith('<html')) {
+    return true;
+  }
+
+  // An ICO or a PNG starts with binary bytes, so a markup start is required even
+  // when the server claims HTML
+  return !!contentType && /^\s*text\/html/i.test(contentType) && start.startsWith('<');
+};
+
 export const checkIcoFavicon = async (
   url: string,
   head: HTMLElement | null,
@@ -126,33 +148,44 @@ export const checkIcoFavicon = async (
         iconUrl = null;
       }
     } else {
-      if (!isDeclared) {
-        messages.push({
-          status: CheckerStatus.Ok,
-          id: MessageId.icoFaviconImplicitInRoot,
-          text: 'An implicit ICO favicon is found at /favicon.ico',
-        });
-      }
-
-      messages.push({
-        status: CheckerStatus.Ok,
-        id: MessageId.icoFaviconDownloadable,
-        text: 'ICO favicon found',
-      });
-
       const iconBuffer = await readableStreamToBuffer(iconResponse.readableStream);
 
-      // Truncated files, PNGs renamed to `.ico`, plain HTML error pages served
-      // with a 200: `decode-ico` throws on all of those. The file is the broken
-      // thing, not the check.
-      try {
-        images = decodeIco(new Uint8Array(iconBuffer));
-      } catch (error) {
+      if (isHtmlDocument(iconBuffer, iconResponse.contentType)) {
         messages.push({
           status: CheckerStatus.Error,
-          id: MessageId.icoFaviconUnreadable,
-          text: `The ICO favicon at \`${iconUrl}\` cannot be read (${decodingError(error)})`,
+          id: MessageId.icoFaviconIsHtml,
+          text: `\`${iconUrl}\` returns an HTML page instead of an icon`,
         });
+
+        if (!isDeclared) {
+          iconUrl = null;
+        }
+      } else {
+        if (!isDeclared) {
+          messages.push({
+            status: CheckerStatus.Ok,
+            id: MessageId.icoFaviconImplicitInRoot,
+            text: 'An implicit ICO favicon is found at /favicon.ico',
+          });
+        }
+
+        messages.push({
+          status: CheckerStatus.Ok,
+          id: MessageId.icoFaviconDownloadable,
+          text: 'ICO favicon found',
+        });
+
+        // Truncated files, PNGs renamed to `.ico`: `decode-ico` throws on those.
+        // The file is the broken thing, not the check.
+        try {
+          images = decodeIco(new Uint8Array(iconBuffer));
+        } catch (error) {
+          messages.push({
+            status: CheckerStatus.Error,
+            id: MessageId.icoFaviconUnreadable,
+            text: `The ICO favicon at \`${iconUrl}\` cannot be read (${decodingError(error)})`,
+          });
+        }
       }
     }
   }

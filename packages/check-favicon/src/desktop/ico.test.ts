@@ -1,7 +1,7 @@
 import { parse } from 'node-html-parser';
-import { checkIcoFavicon } from './ico';
+import { checkIcoFavicon, isHtmlDocument } from './ico';
 import { CheckerMessage, CheckerStatus, DesktopSingleReport, FetchResponse, MessageId } from '../types';
-import { filePathToReadableStream } from '../helper';
+import { filePathToReadableStream, stringToReadableStream } from '../helper';
 import { testFetcher } from '../test-helper';
 import sharp from 'sharp';
 
@@ -104,6 +104,120 @@ test('checkIcoFavicon - implicit /favicon.ico when not declared', async () => {
         status: 200,
         contentType: 'image/x-icon',
         readableStream: await filePathToReadableStream(testIconPath),
+      },
+    },
+  );
+});
+
+test('isHtmlDocument', () => {
+  const html = '<!DOCTYPE html><html><head><title>Home</title></head></html>';
+  expect(isHtmlDocument(Buffer.from(html), 'text/html; charset=utf-8')).toBe(true);
+  expect(isHtmlDocument(Buffer.from(html), 'image/x-icon')).toBe(true);
+  expect(isHtmlDocument(Buffer.from(`\uFEFF\n  <html lang="en"></html>`), null)).toBe(true);
+  expect(isHtmlDocument(Buffer.from('<head><title>Home</title></head>'), 'text/html')).toBe(true);
+
+  expect(isHtmlDocument(Buffer.from('<head><title>Home</title></head>'), null)).toBe(false);
+  expect(isHtmlDocument(Buffer.from([0, 0, 1, 0, 1, 0, 16, 16]), 'text/html')).toBe(false);
+  expect(isHtmlDocument(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), 'text/html')).toBe(false);
+});
+
+// A single-page app fallback, a geo wall or a soft 404 answers /favicon.ico with a page
+test('checkIcoFavicon - implicit /favicon.ico that is a web page', async () => {
+  const icoFaviconIsHtml = {
+    messages: [
+      {
+        status: CheckerStatus.Error,
+        id: MessageId.icoFaviconIsHtml,
+      },
+    ],
+    icon: {
+      content: null,
+      url: null,
+      width: null,
+      height: null,
+    },
+  };
+
+  await runIcoTest(`<title>Some text</title>`, icoFaviconIsHtml, {
+    'https://example.com/favicon.ico': {
+      status: 200,
+      contentType: 'text/html; charset=utf-8',
+      readableStream: stringToReadableStream('<!DOCTYPE html><html><head><title>Home</title></head></html>'),
+    },
+  });
+
+  // Whatever the server claims
+  await runIcoTest(`<title>Some text</title>`, icoFaviconIsHtml, {
+    'https://example.com/favicon.ico': {
+      status: 200,
+      contentType: 'image/x-icon',
+      readableStream: stringToReadableStream('<html><head><title>Not found</title></head></html>'),
+    },
+  });
+});
+
+test('checkIcoFavicon - implicit /favicon.ico served as text/html is still an ICO', async () => {
+  await runIcoTest(
+    `<title>Some text</title>`,
+    {
+      messages: [
+        {
+          status: CheckerStatus.Ok,
+          id: MessageId.icoFaviconImplicitInRoot,
+        },
+        {
+          status: CheckerStatus.Ok,
+          id: MessageId.icoFaviconDownloadable,
+        },
+        {
+          status: CheckerStatus.Ok,
+          id: MessageId.icoFaviconExpectedSizes,
+        },
+      ],
+      icon: {
+        content: 'data:image/png;base64,placeholder',
+        url: 'https://example.com/favicon.ico',
+        width: 48,
+        height: 48,
+      },
+    },
+    {
+      'https://example.com/favicon.ico': {
+        status: 200,
+        contentType: 'text/html',
+        readableStream: await filePathToReadableStream('./fixtures/simple-ico.ico'),
+      },
+    },
+  );
+});
+
+// The page points at the file, which stays in the report, as for a 404
+test('checkIcoFavicon - declared ICO that is a web page', async () => {
+  await runIcoTest(
+    `<link rel="icon" href="/favicon.ico" />`,
+    {
+      messages: [
+        {
+          status: CheckerStatus.Ok,
+          id: MessageId.icoFaviconDeclared,
+        },
+        {
+          status: CheckerStatus.Error,
+          id: MessageId.icoFaviconIsHtml,
+        },
+      ],
+      icon: {
+        content: null,
+        url: 'https://example.com/favicon.ico',
+        width: null,
+        height: null,
+      },
+    },
+    {
+      'https://example.com/favicon.ico': {
+        status: 200,
+        contentType: 'text/html',
+        readableStream: stringToReadableStream('<!DOCTYPE html><html><head><title>Home</title></head></html>'),
       },
     },
   );
