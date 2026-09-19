@@ -1005,3 +1005,43 @@ test('checkTouchIcon - The implicit icon belongs to the page origin, not to <bas
     'https://example.com/apple-touch-icon.png',
   ]);
 });
+
+// Seen at the root of real sites: an empty 200 (berkeley.edu), a JSON error
+// (alidns.com), an ICO named `.png` before a real PNG (ameli.fr)
+test('checkTouchIcon - Only a decodable image at the root is a touch icon', async () => {
+  const emptyBody: FetchResponse = {
+    status: 200,
+    contentType: 'image/png',
+    readableStream: stringToReadableStream(''),
+  };
+  const jsonError: FetchResponse = {
+    status: 200,
+    contentType: 'application/json',
+    readableStream: stringToReadableStream('{"status":500,"message":"System Error"}'),
+  };
+
+  await runCheckTouchIconTest(
+    `<title>Hey</title>`,
+    { messages: [error(MessageId.noTouchIcon)] },
+    {
+      'https://example.com/apple-touch-icon-precomposed.png': emptyBody,
+      'https://example.com/apple-touch-icon.png': jsonError,
+    },
+  );
+
+  const png = await pngOfSize(180);
+  const result = await checkTouchIconIcon(
+    'https://example.com/',
+    parse(`<title>Hey</title>`),
+    testFetcher({
+      'https://example.com/apple-touch-icon-precomposed.png': {
+        status: 200,
+        contentType: 'image/vnd.microsoft.icon',
+        readableStream: await filePathToReadableStream('./fixtures/simple-ico.ico'),
+      },
+      'https://example.com/apple-touch-icon.png': pngResponse(png),
+    }),
+  );
+  expect(result.icon?.url).toEqual('https://example.com/apple-touch-icon.png');
+  expect(result.messages.map(m => m.id)).not.toContain(MessageId.touchIconUnreadable);
+});

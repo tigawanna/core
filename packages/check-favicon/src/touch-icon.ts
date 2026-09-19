@@ -15,10 +15,8 @@ import {
   documentBaseUrl,
   fetchFetcher,
   mergeUrlAndPath,
-  readableStreamToBuffer,
 } from './helper';
 import { IconDeclaration, resolveIconDeclarations } from './desktop/declarations';
-import { isHtmlDocument } from './desktop/ico';
 
 export const TouchIconFileSize = 180;
 
@@ -194,27 +192,14 @@ type ImplicitTouchIcon = {
 const findImplicitTouchIcon = async (pageUrl: string, fetcher: Fetcher): Promise<ImplicitTouchIcon | null> => {
   for (const path of ImplicitTouchIconPaths) {
     const url = mergeUrlAndPath(pageUrl, path);
-    const response = await fetcher(url, 'image/png');
-    if (response.status >= 300 || !response.readableStream) {
+    const fetch = await fetchTouchIcon(url, fetcher);
+
+    // Only an image counts. Servers answer these well-known paths with all sorts
+    // of things: a 404, an empty 200 or 204, a JSON error, their home page, an ICO
+    // named `.png`. None of them is a touch icon, so try the next path.
+    if (fetch.outcome.kind !== 'fetched' || !fetch.output?.width) {
       continue;
     }
-
-    // A server that answers every URL with a page is not serving a touch icon
-    const buffer = await readableStreamToBuffer(response.readableStream);
-    if (isHtmlDocument(buffer, response.contentType)) {
-      continue;
-    }
-
-    // The bytes are already here: replay them instead of downloading them again
-    const replay: Fetcher = async () => ({
-      ...response,
-      readableStream: new ReadableStream({
-        start(controller) {
-          controller.enqueue(new Uint8Array(buffer));
-          controller.close();
-        },
-      }),
-    });
 
     return {
       declaration: {
@@ -222,7 +207,7 @@ const findImplicitTouchIcon = async (pageUrl: string, fetcher: Fetcher): Promise
         href: path,
         url,
       },
-      fetch: await fetchTouchIcon(url, replay),
+      fetch,
     };
   }
 
